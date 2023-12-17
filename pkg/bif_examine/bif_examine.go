@@ -7,6 +7,7 @@ import (
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc"
 	"github.com/kaiiorg/go-bif-examine/pkg/storage"
 	"github.com/kaiiorg/go-bif-examine/pkg/web"
+	"github.com/kaiiorg/go-bif-examine/pkg/bif"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -50,6 +51,17 @@ func (be *BifExamine) Run() error {
 	be.web.Run()
 
 	be.log.Info().Msg("Running!")
+
+	key, err := bif.NewKeyFromFile("./test_bifs/chitin.key", log.With().Str("component", "bif-key").Logger())
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to read KEY")
+	}
+	log.Info().
+		Interface("key", key).
+		Str("version", key.Header.VersionToString()).
+		Str("signature", key.Header.SignatureToString()).
+		Msg("read KEY")
+
 	return nil
 }
 
