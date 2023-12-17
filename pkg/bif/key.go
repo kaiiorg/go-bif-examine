@@ -8,17 +8,21 @@ import (
 )
 
 type Key struct {
-	Header     *KeyHeader
-	BifEntries map[string]*KeyBifEntry
+	Header               *KeyHeader
+	BifFileNameToEntries map[string]*KeyBifEntry
+	BifIndexToFileName   map[uint32]string
+	ResourceEntries      []*KeyBifResourceEntry
 
 	log zerolog.Logger
 }
 
 func NewKeyFromFile(path string, log zerolog.Logger) (*Key, error) {
 	k := &Key{
-		Header:     NewKeyHeader(),
-		BifEntries: map[string]*KeyBifEntry{},
-		log:        log,
+		Header:               NewKeyHeader(),
+		BifFileNameToEntries: map[string]*KeyBifEntry{},
+		BifIndexToFileName:   map[uint32]string{},
+		ResourceEntries:      []*KeyBifResourceEntry{},
+		log:                  log,
 	}
 
 	file, err := os.Open(path)
@@ -38,7 +42,12 @@ func NewKeyFromFile(path string, log zerolog.Logger) (*Key, error) {
 		return nil, err
 	}
 
-	err = k.readBifEntries(file, fileInfo.Size())
+	err = k.readBifFileNameToEntries(file, fileInfo.Size())
+	if err != nil {
+		return nil, err
+	}
+
+	err = k.readResourceEntries(file, fileInfo.Size())
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +77,7 @@ func (k *Key) readAndValidateHeader(file *os.File, fileSize int64) error {
 	return nil
 }
 
-func (k *Key) readBifEntries(file *os.File, fileSize int64) error {
+func (k *Key) readBifFileNameToEntries(file *os.File, fileSize int64) error {
 	// Read each bif entry until we've read all of them or have an error
 	for i := uint32(0); i < k.Header.BifEntryCount; i++ {
 		// Make sure we're at the start of the bif entries + our current bif offset
@@ -87,7 +96,6 @@ func (k *Key) readBifEntries(file *os.File, fileSize int64) error {
 			k.log.Warn().Err(err).Msg("Failed to validate a bif entry; skipping")
 			continue
 		}
-		k.log.Debug().Interface("entry", entry).Msg("Ready bif entry from key")
 
 		// Read the bif file's name from the offset
 		filename := make([]byte, entry.FileNameLength-1)
@@ -95,17 +103,46 @@ func (k *Key) readBifEntries(file *os.File, fileSize int64) error {
 		if err != nil {
 			return err
 		}
-		k.log.Info().Str("filename", string(filename)).Msg("Read bif filename from key")
 
 		// Log a warning if we've already stored this entry
-		_, found := k.BifEntries[string(filename)]
+		_, found := k.BifFileNameToEntries[string(filename)]
 		if found {
 			k.log.Warn().Str("filename", string(filename)).Msg("Found a bif entry that a preview entry already listed; skipping")
 			continue
 		}
-		k.BifEntries[string(filename)] = entry
+		k.BifFileNameToEntries[string(filename)] = entry
+		k.BifIndexToFileName[i] = string(filename)
 	}
 
-	k.log.Debug().Int("entriesRead", len(k.BifEntries)).Uint32("expectedToRead", k.Header.BifEntryCount).Msg("Read all bif entries from the file")
+	k.log.Debug().
+		Int("entriesRead", len(k.BifFileNameToEntries)).
+		Uint32("expectedToRead", k.Header.BifEntryCount).
+		Msg("Read all bif entries from the file")
+	return nil
+}
+
+func (k *Key) readResourceEntries(file *os.File, fileSize int64) error {
+	// Read each resource entry until we've read all of them or have an error
+	for i := uint32(0); i < k.Header.ResourceEntryCount; i++ {
+		// Make sure we're at the start of the bif entries + our current bif offset
+		_, err := file.Seek(int64(k.Header.OffsetToResourceEntries)+int64(KeyBifResourceEntryLength)*int64(i), 0)
+		if err != nil {
+			return err
+		}
+		// Read the entry
+		entry := NewKeyBifResourceEntry()
+		err = binary.Read(file, binary.LittleEndian, entry)
+		if err != nil {
+			return err
+		}
+		k.log.Trace().Interface("entry", entry).Msg("Read resource entry from key")
+
+		k.ResourceEntries = append(k.ResourceEntries, entry)
+	}
+
+	k.log.Debug().
+		Int("entriesRead", len(k.ResourceEntries)).
+		Uint32("expectedToRead", k.Header.ResourceEntryCount).
+		Msg("Read all resource entries from the file")
 	return nil
 }

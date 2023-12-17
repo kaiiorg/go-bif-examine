@@ -13,3 +13,7 @@ func NewKeyBifResourceEntry() *KeyBifResourceEntry {
 		Name: [8]byte{},
 	}
 }
+
+func (kbre *KeyBifResourceEntry) NameToString() string {
+	return string(kbre.Name[:])
+}

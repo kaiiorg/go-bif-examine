@@ -57,7 +57,6 @@ func (be *BifExamine) Run() error {
 		log.Fatal().Err(err).Msg("Failed to read KEY")
 	}
 	log.Info().
-		Interface("key", key).
 		Str("version", key.Header.VersionToString()).
 		Str("signature", key.Header.SignatureToString()).
 		Msg("read KEY")
