@@ -18,7 +18,7 @@ type Storage struct {
 	log    zerolog.Logger
 
 	s3Session *session.Session
-	s3Client *s3.S3
+	s3Client  *s3.S3
 }
 
 func New(conf *config.Config, log zerolog.Logger) (*Storage, error) {

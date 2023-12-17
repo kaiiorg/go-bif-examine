@@ -1,14 +1,14 @@
 package bif
 
 import (
-	"os"
 	"encoding/binary"
+	"os"
 
 	"github.com/rs/zerolog"
 )
 
 type Key struct {
-	Header *KeyHeader
+	Header     *KeyHeader
 	BifEntries map[string]*KeyBifEntry
 
 	log zerolog.Logger
@@ -16,9 +16,9 @@ type Key struct {
 
 func NewKeyFromFile(path string, log zerolog.Logger) (*Key, error) {
 	k := &Key{
-		Header: NewKeyHeader(),
+		Header:     NewKeyHeader(),
 		BifEntries: map[string]*KeyBifEntry{},
-		log: log,
+		log:        log,
 	}
 
 	file, err := os.Open(path)
@@ -72,7 +72,7 @@ func (k *Key) readBifEntries(file *os.File, fileSize int64) error {
 	// Read each bif entry until we've read all of them or have an error
 	for i := uint32(0); i < k.Header.BifEntryCount; i++ {
 		// Make sure we're at the start of the bif entries + our current bif offset
-		_, err := file.Seek(int64(k.Header.OffsetToBifEntries) + int64(KeyBifEntryLength) * int64(i), 0)
+		_, err := file.Seek(int64(k.Header.OffsetToBifEntries)+int64(KeyBifEntryLength)*int64(i), 0)
 		if err != nil {
 			return err
 		}
@@ -90,7 +90,7 @@ func (k *Key) readBifEntries(file *os.File, fileSize int64) error {
 		k.log.Debug().Interface("entry", entry).Msg("Ready bif entry from key")
 
 		// Read the bif file's name from the offset
-		filename := make([]byte, entry.FileNameLength - 1)
+		filename := make([]byte, entry.FileNameLength-1)
 		_, err = file.ReadAt(filename, int64(entry.OffsetToBifFileName))
 		if err != nil {
 			return err

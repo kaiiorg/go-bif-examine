@@ -7,17 +7,17 @@ import (
 
 var (
 	ErrOffsetToBifFileNameExceedsFile = errors.New("bif entry gives offset to filename beyond the file")
-	ErrUnexpectedNameLength = errors.New("bif entry gives unexpected length of filename")
+	ErrUnexpectedNameLength           = errors.New("bif entry gives unexpected length of filename")
 )
 
 // KeyBifEntry describes a bif entry in the key file as defined by IESDP. The order and size of each
 // field is very important because the encoding/binary package is used to read and parse the file
 // https://gibberlings3.github.io/iesdp/file_formats/ie_formats/key_v1.htm#keyv1_BifIndices
 type KeyBifEntry struct {
-	FileLength uint32
+	FileLength          uint32
 	OffsetToBifFileName uint32
-	FileNameLength uint16
-	DetailsBitfield uint16
+	FileNameLength      uint16
+	DetailsBitfield     uint16
 }
 
 const (
@@ -25,7 +25,7 @@ const (
 	MaxFileNameLength = 1024
 )
 
-func NewKeyBifEntry() *KeyBifEntry{
+func NewKeyBifEntry() *KeyBifEntry {
 	return &KeyBifEntry{}
 }
 

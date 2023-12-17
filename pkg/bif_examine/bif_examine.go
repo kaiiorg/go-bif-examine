@@ -3,11 +3,11 @@ package bif_examine
 import (
 	"context"
 
+	"github.com/kaiiorg/go-bif-examine/pkg/bif"
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc"
 	"github.com/kaiiorg/go-bif-examine/pkg/storage"
 	"github.com/kaiiorg/go-bif-examine/pkg/web"
-	"github.com/kaiiorg/go-bif-examine/pkg/bif"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
