@@ -2,9 +2,13 @@ package bif_examine
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"strings"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/bif"
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
+	"github.com/kaiiorg/go-bif-examine/pkg/models"
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc"
 	"github.com/kaiiorg/go-bif-examine/pkg/storage"
 	"github.com/kaiiorg/go-bif-examine/pkg/web"
@@ -56,10 +60,37 @@ func (be *BifExamine) Run() error {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to read KEY")
 	}
-	log.Info().
+	be.log.Info().
 		Str("version", key.Header.VersionToString()).
 		Str("signature", key.Header.SignatureToString()).
 		Msg("read KEY")
+	modelResources := []*models.Resource{}
+	for _, resource := range key.ResourceEntries {
+		if models.ResourceType(resource.Type) != models.TYPE_WAV {
+			continue
+		}
+		name := strings.Trim(string(resource.Name[:]), "\u0000")
+		bifIndex := (0xFFF00000 & resource.LocatorBitfield) >> 20
+		bifFile, found := key.BifIndexToFileName[bifIndex]
+		if !found {
+			be.log.Warn().
+				Uint32("calculatedIndex", bifIndex).
+				Str("resourceName", name).
+				Msg("Did not find a bif file by the given index for the given resource")
+			continue
+		}
+		modelResources = append(modelResources, models.NewResource(resource.Type, name, bifFile))
+	}
+
+	be.log.Info().Int("count", len(modelResources)).Msg("Mapped sound resources to bif files")
+	jsonBytes, err := json.Marshal(modelResources)
+	if err != nil {
+		be.log.Fatal().Err(err).Msg("Failed to marshal data to json")
+	}
+	err = os.WriteFile("./output.json", jsonBytes, 0666)
+	if err != nil {
+		be.log.Fatal().Err(err).Msg("Failed to write output data to file")
+	}
 
 	return nil
 }

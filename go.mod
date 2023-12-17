@@ -6,9 +6,9 @@ require (
 	github.com/aws/aws-sdk-go v1.49.4
 	github.com/hashicorp/hcl/v2 v2.19.1
 	github.com/rs/zerolog v1.31.0
-	golang.org/x/image v0.14.0
 	google.golang.org/grpc v1.60.0
 	google.golang.org/protobuf v1.31.0
+	gorm.io/gorm v1.25.5
 )
 
 require (
@@ -17,6 +17,8 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
