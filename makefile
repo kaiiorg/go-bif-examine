@@ -8,8 +8,6 @@ grpc:
 	./protoc/bin/protoc \
 		--go_out=./pkg/rpc \
 		--go-grpc_out=./pkg/rpc \
-		--plugin=./protoc/bin/protoc-gen-js \
-		--js_out=import_style=commonjs,binary:./pkg/web/static/js \
 		./pkg/rpc/pb/bif_examine.proto
 
 install_grpc_prereqs:
@@ -19,5 +17,5 @@ install_grpc_prereqs:
 	chmod +x ./protoc/bin/protoc
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-	cd ./protoc && wget -nc https://github.com/protocolbuffers/protobuf-javascript/releases/download/v3.21.2/protobuf-javascript-3.21.2-linux-x86_64.tar.gz
-	cd ./protoc && tar -xzvf protobuf-javascript-3.21.2-linux-x86_64.tar.gz
+	# cd ./protoc && wget -nc https://github.com/protocolbuffers/protobuf-javascript/releases/download/v3.21.2/protobuf-javascript-3.21.2-linux-x86_64.tar.gz
+	# cd ./protoc && tar -xzvf protobuf-javascript-3.21.2-linux-x86_64.tar.gz
