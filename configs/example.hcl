@@ -1,3 +1,7 @@
+grpc {
+    port = 50051
+}
+
 db {
     db_name  = "go_bif_examine"
     host     = "localhost"

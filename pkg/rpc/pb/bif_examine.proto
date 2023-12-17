@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package pb;
+option go_package = "./pb";
+
+service BifExamine {
+    rpc UploadBifKey (UploadBifKeyRequest) returns (UploadBifKeyResponse);
+}
+
+message UploadBifKeyRequest {
+    string project_name = 1;
+    bytes contents = 2;
+}
+
+message UploadBifKeyResponse {
+    bool ok = 1;
+}

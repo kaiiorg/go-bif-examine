@@ -3,7 +3,10 @@ package main
 import (
 	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/kaiiorg/go-bif-examine/pkg/bif_examine"
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
 
 	"github.com/rs/zerolog"
@@ -32,7 +35,25 @@ func main() {
 			Msg("Failed to load config file")
 	}
 
-	log.Info().Interface("config", conf).Msg("It works")
+	// Create and start BifExamine
+	log.Info().Msg("Starting go-bif-examine; use ctrl+c to exit")
+	be := bif_examine.New(conf)
+	err = be.Run()
+	if err != nil {
+		log.Fatal().
+			Err(err).
+			Msg("Failed to start go-bif-examine")
+	}
+
+	waitForInterrupt()
+
+	// Close BifExamine
+	err = be.Close()
+	if err != nil {
+		log.Warn().
+			Err(err).
+			Msg("Failed to cleanly close go-bif-examine")
+	}
 }
 
 func configureLogging() {
@@ -51,4 +72,11 @@ func configureLogging() {
 		Send()
 
 	zerolog.SetGlobalLevel(zerologLevel)
+}
+
+func waitForInterrupt() {
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+	sig := <-signalChan
+	log.Warn().Str("signal", sig.String()).Msg("Received signal, exiting")
 }

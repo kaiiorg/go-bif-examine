@@ -5,8 +5,9 @@ import (
 )
 
 type Config struct {
-	Db *Database `hcl:"db,block"`
-	S3 *S3       `hcl:"s3,block"`
+	Grpc *Grpc     `hcl:"grpc,block"`
+	Db   *Database `hcl:"db,block"`
+	S3   *S3       `hcl:"s3,block"`
 }
 
 func LoadFromFile(filepath string) (*Config, error) {
