@@ -9,7 +9,7 @@ grpc:
 		--go_out=./pkg/rpc \
 		--go-grpc_out=./pkg/rpc \
 		--plugin=./protoc/bin/protoc-gen-js \
-		--js_out=./pkg/rpc/pb/js \
+		--js_out=import_style=commonjs,binary:./pkg/web/static/js \
 		./pkg/rpc/pb/bif_examine.proto
 
 install_grpc_prereqs:

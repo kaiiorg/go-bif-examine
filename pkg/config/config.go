@@ -6,6 +6,7 @@ import (
 
 type Config struct {
 	Grpc *Grpc     `hcl:"grpc,block"`
+	Web  *Web      `hcl:"web,block"`
 	Db   *Database `hcl:"db,block"`
 	S3   *S3       `hcl:"s3,block"`
 }

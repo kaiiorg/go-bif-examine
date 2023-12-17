@@ -1,8 +1,8 @@
 package rpc
 
 import (
-	"net"
 	"fmt"
+	"net"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc/pb"
