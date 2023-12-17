@@ -1,0 +1,5 @@
+# Not committing the biff and key files to git; I'm sure whoever owns the copywrite wouldn't like that.
+*.bif
+*.key
+
+bin/
