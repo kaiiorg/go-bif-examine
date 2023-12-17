@@ -37,7 +37,12 @@ func main() {
 
 	// Create and start BifExamine
 	log.Info().Msg("Starting go-bif-examine; use ctrl+c to exit")
-	be := bif_examine.New(conf)
+	be, err := bif_examine.New(conf)
+	if err != nil {
+		log.Fatal().
+			Err(err).
+			Msg("Failed to create go-bif-examine")
+	}
 	err = be.Run()
 	if err != nil {
 		log.Fatal().

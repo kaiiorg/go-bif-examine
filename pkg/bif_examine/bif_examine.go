@@ -5,6 +5,7 @@ import (
 
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc"
+	"github.com/kaiiorg/go-bif-examine/pkg/storage"
 	"github.com/kaiiorg/go-bif-examine/pkg/web"
 
 	"github.com/rs/zerolog"
@@ -18,20 +19,26 @@ type BifExamine struct {
 
 	log zerolog.Logger
 
-	rpc *rpc.Server
-	web *web.Web
+	storage *storage.Storage
+	rpc     *rpc.Server
+	web     *web.Web
 }
 
-func New(conf *config.Config) *BifExamine {
+func New(conf *config.Config) (*BifExamine, error) {
+	s3Storage, err := storage.New(conf, log.With().Str("component", "storage").Logger())
+	if err != nil {
+		return nil, err
+	}
 	be := &BifExamine{
-		config: conf,
-		log:    log.With().Str("component", "general").Logger(),
-		rpc:    rpc.New(conf, log.With().Str("component", "rpc").Logger()),
-		web:    web.New(conf, log.With().Str("component", "web").Logger()),
+		config:  conf,
+		log:     log.With().Str("component", "general").Logger(),
+		storage: s3Storage,
+		rpc:     rpc.New(conf, log.With().Str("component", "rpc").Logger()),
+		web:     web.New(conf, log.With().Str("component", "web").Logger()),
 	}
 	be.ctx, be.ctxCancel = context.WithCancel(context.Background())
 
-	return be
+	return be, nil
 }
 
 func (be *BifExamine) Run() error {

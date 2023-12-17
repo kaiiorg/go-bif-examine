@@ -1,8 +1,11 @@
 package config
 
 type S3 struct {
-	Host string `hcl:"host"`
-	Port int    `hcl:"port"`
+	Scheme string `hcl:"scheme"`
+	Host   string `hcl:"host"`
+	Port   int    `hcl:"port"`
+	Region string `hcl:"region"`
+	Bucket string `hcl:"bucket"`
 
 	// It'd be better to use something like Hashicorp's Vault for these secrets
 	// but that's beyond the scope of this hobby project

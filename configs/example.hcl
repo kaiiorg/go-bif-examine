@@ -16,8 +16,12 @@ db {
 }
 
 s3 {
+    // Leave scheme, post, and port as their zero values to use AWS
+    scheme = "http"
     host = "localhost"
     port = 9000
+    region = "us-east-1" // MinIO does not use regions, but we still have to provide something
+    bucket = "go-bif-examine" // Expects bucket to be setup ahead of time
     access_key = "KfOYD0GuCtCkNmRetguA"
     secret_key = "n62L0XIsUDOxufML4j5wnqdn8YxrbpnJWu78DiUt"
 }
