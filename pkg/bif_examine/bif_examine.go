@@ -5,6 +5,9 @@ import (
 	"os"
 	"strings"
 	"path/filepath"
+	"crypto/sha256"
+	"encoding/hex"
+	"io"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/bif"
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
@@ -71,7 +74,7 @@ func (be *BifExamine) Close() error {
 
 func (be *BifExamine) Dev_ProcessKeyAndBifFiles() {
 	// Read the key; this will tell us what is in each bif file
-	key, err := bif.NewKeyFromFile("./test_bifs/chitin.key", log.With().Str("component", "bif-key").Logger())
+	key, err := bif.NewKeyFromFile("./test_bifs/chitin.key", be.log.With().Str("component", "bif-key").Logger())
 	if err != nil {
 		be.log.Fatal().Err(err).Msg("Failed to read KEY")
 	}
@@ -84,24 +87,51 @@ func (be *BifExamine) Dev_ProcessKeyAndBifFiles() {
 	audioResources := key.AudioEntriesToModel()
 	be.log.Info().Msg("Determined location of audio assets")
 	
+	// Find the relevant bif files
 	relevantBifs := be.Dev_FindRelevantBifs(audioResources)
 	be.log.Info().Int("relevantBifsCount", len(relevantBifs)).Msg("Found relevant bif files")
+
+	// Open each relevant bif, calculate its sha265 hash, and scan for the file entries.
+	// We're not extractings the audio files; we just need to know the offset from the 
+	// start of the file and the size of the resource
+	for bifName, _ := range relevantBifs {
+		bifPath := filepath.Join("./test_bifs/data", bifName)
+		// Calculating the sha256 will later be done while uploading the file to S3, not when we get to this processing step
+		_, err := sha256OfFile(bifPath)
+		if err != nil {
+			be.log.Fatal().Err(err).Msg("Failed to calculate the sha256 hash of the bif")
+		}
+
+		// Get the resources that are relevant to this bif
+		_, found := audioResources[strings.ToLower(bifName)]
+		if !found {
+			be.log.Fatal().Str("bifName", bifName).Msg("Did not find any audio resources for a bif file that was previously determined to be relevant")
+		}
+		
+		// Parse the bif
+		bif, err := bif.NewBifFromFile(bifPath, be.log.With().Str("component", "bif").Logger())
+		be.log.Info().
+			Str("filepath", bifPath).
+			Str("version", bif.Header.VersionToString()).
+			Str("signature", bif.Header.SignatureToString()).
+			Msg("Read bif")
+	}
 
 	// Exit now; we're just testing stuff for later use
 	os.Exit(0)
 }
 
-func (be *BifExamine) Dev_FindRelevantBifs(audioResources map[string]map[uint32]*models.Resource) []string {
+func (be *BifExamine) Dev_FindRelevantBifs(audioResources map[string]map[uint32]*models.Resource) map[string]interface{} {
 	// Get the list of bif files and determine which ones we need to keep for asset extraction and 
 	// which ones are ok to delete
-	filesInDir, err := os.ReadDir("./test_bifs/data")
+	bifDir := "./test_bifs/data"
+	filesInDir, err := os.ReadDir(bifDir)
 	if err != nil {
 		be.log.Fatal().Err(err).Msg("Failed to read contents of bif dir")
 	}
 	bifsOkToDelete := []string{}
-	bifsFoundNeeded := []string{}
 	bifsFoundNeededMap := map[string]interface{}{}
-	for _, dirEntry := range filesInDir{
+	for _, dirEntry := range filesInDir {
 		entryName := strings.ToLower(dirEntry.Name())
 		// Skip anything that isn't a .bif
 		if filepath.Ext(entryName) != ".bif" {
@@ -111,29 +141,26 @@ func (be *BifExamine) Dev_FindRelevantBifs(audioResources map[string]map[uint32]
 		// Determine if we have an audio resource that relies on this file
 		_, found := audioResources[entryName]
 		if found {
-			bifsFoundNeeded = append(bifsFoundNeeded, dirEntry.Name())
-			bifsFoundNeededMap[entryName] = nil
+			bifsFoundNeededMap[dirEntry.Name()] = nil
 		} else {
-			bifsOkToDelete = append(bifsOkToDelete, entryName)
+			bifsOkToDelete = append(bifsOkToDelete, dirEntry.Name())
 		}
 	}
-	// Determine if we're missing any bif files
-	bifsMissing := []string{}
-	resourcesMissing := 0
-	for needed, resources := range audioResources {
-		_, found := bifsFoundNeededMap[needed]
-		if !found {
-			resourcesMissing += len(resources)
-			bifsMissing = append(bifsMissing, needed)
-		}
+	return bifsFoundNeededMap
+}
+
+func sha256OfFile(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
 	}
-	be.log.Info().
-		Int("okToDeleteCount", len(bifsOkToDelete)).
-		Int("neededFound", len(bifsFoundNeeded)).
-		Int("expected", len(audioResources)).
-		Int("bifsMissingCount", len(bifsMissing)).
-		Int("resourcesMissing", resourcesMissing).
-		Msg("Scanned bif dir and determined what's needed and what's not")
-	
-	return bifsFoundNeeded
+	defer file.Close()
+
+	hash := sha256.New()
+
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }

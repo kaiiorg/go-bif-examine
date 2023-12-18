@@ -13,4 +13,6 @@ type Resource struct {
 	TileSetIndex uint32
 	NonTileSetIndex uint32
 	BifIndex uint32
+
+	BifSha256 string
 }

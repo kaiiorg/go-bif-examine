@@ -20,11 +20,6 @@ type KeyBifEntry struct {
 	DetailsBitfield     uint16
 }
 
-const (
-	KeyBifEntryLength = 12
-	MaxFileNameLength = 1024
-)
-
 func NewKeyBifEntry() *KeyBifEntry {
 	return &KeyBifEntry{}
 }

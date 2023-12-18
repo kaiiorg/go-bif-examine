@@ -10,8 +10,6 @@ type KeyBifResourceEntry struct {
 	LocatorBitfield uint32
 }
 
-const KeyBifResourceEntryLength = 14
-
 func NewKeyBifResourceEntry() *KeyBifResourceEntry {
 	return &KeyBifResourceEntry{
 		Name: [8]byte{},
