@@ -111,7 +111,7 @@ func (k *Key) readBifFileNameToEntries(file *os.File, fileSize int64) error {
 		// Log a warning if we've already stored this entry
 		_, found := k.BifFileNameToEntries[string(filename)]
 		if found {
-			k.log.Warn().Str("filename", string(filename)).Msg("Found a bif entry that a preview entry already listed; skipping")
+			k.log.Warn().Str("filename", string(filename)).Msg("Found a bif entry that a previous entry already listed; skipping")
 			continue
 		}
 		k.BifFileNameToEntries[string(filename)] = entry

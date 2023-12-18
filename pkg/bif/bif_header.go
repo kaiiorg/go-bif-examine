@@ -7,7 +7,7 @@ import (
 
 // BifHeader is the header in the bif file as defined by IESDP. The order and size of each
 // field is very important because the encoding/binary package is used to read and parse the file
-// https://gibberlings3.github.io/iesdp/file_formats/ie_formats/key_v1.htm#keyv1_Header
+// https://gibberlings3.github.io/iesdp/file_formats/ie_formats/bif_v1.htm#bif_v1_Header
 type BifHeader struct {
 	Signature           [4]byte
 	Version             [4]byte

@@ -22,6 +22,8 @@ var (
 	ErrUnexpectedFileLength              = errors.New("unexpected file length")
 	ErrBifEntryOffsetExceedsFile         = errors.New("the offset for the start of the bif entries is beyond the length of the file")
 	ErrBifEntryResourceOffsetExceedsFile = errors.New("the offset for the start of the bif resource entries is beyond the length of the file")
+	ErrOffsetToBifDataExceedsFile        = errors.New("the offset for the start of the bif data is beyond the length of the file")
+	ErrBifDataExceedsFile                = errors.New("the offset+size of the data described by the entry exceeds the length of the file")
 )
 
 var (
