@@ -1,5 +1,9 @@
 package bif
 
+import (
+	"strings"
+)
+
 type KeyBifResourceEntry struct {
 	Name            [8]byte
 	Type            uint16
@@ -15,5 +19,17 @@ func NewKeyBifResourceEntry() *KeyBifResourceEntry {
 }
 
 func (kbre *KeyBifResourceEntry) NameToString() string {
-	return string(kbre.Name[:])
+	return strings.Trim(string(kbre.Name[:]), "\u0000")
+}
+
+func (kbre *KeyBifResourceEntry) NonTileSetIndex() uint32 {
+	return (0x3FFFF & kbre.LocatorBitfield)
+}
+
+func (kbre *KeyBifResourceEntry) TileSetIndex() uint32 {
+	return (0xFC000 & kbre.LocatorBitfield) >> 14
+}
+
+func (kbre *KeyBifResourceEntry) BifIndex() uint32 {
+	return (0xFFF00000 & kbre.LocatorBitfield) >> 20
 }

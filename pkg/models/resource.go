@@ -6,15 +6,11 @@ import (
 
 type Resource struct {
 	gorm.Model
-	Name    string `gorm:"not null"`
-	BifPath string `gorm:"not null"`
-	Type    uint16 `gorm:"not null"`
-}
+	Name    string
+	BifPath string
+	Type    uint16
 
-func NewResource(Type uint16, name, bifPath string) *Resource {
-	return &Resource{
-		Name:    name,
-		BifPath: bifPath,
-		Type:    Type,
-	}
+	TileSetIndex uint32
+	NonTileSetIndex uint32
+	BifIndex uint32
 }

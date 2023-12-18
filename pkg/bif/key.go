@@ -2,7 +2,11 @@ package bif
 
 import (
 	"encoding/binary"
+	"path/filepath"
+	"strings"
 	"os"
+
+	"github.com/kaiiorg/go-bif-examine/pkg/models"
 
 	"github.com/rs/zerolog"
 )
@@ -145,4 +149,71 @@ func (k *Key) readResourceEntries(file *os.File, fileSize int64) error {
 		Uint32("expectedToRead", k.Header.ResourceEntryCount).
 		Msg("Read all resource entries from the file")
 	return nil
+}
+
+func (k *Key) AudioEntriesToModel() map[string]map[uint32]*models.Resource {
+	// bifFileName -> NonTileSetIndex -> details about resource
+	modelResources := map[string]map[uint32]*models.Resource{}
+	totalAudio := 0
+	for _, resource := range k.ResourceEntries {
+		// Skip if resource does not describe an audio file
+		if models.ResourceType(resource.Type) != models.TYPE_WAV {
+			k.log.Trace().
+				Str("resourceName", resource.NameToString()).
+				Msg("Resource is not WAV type; skipping")
+			continue
+		}
+
+		// Make sure we know which bif file it lives in
+		bifPath, found := k.BifIndexToFileName[resource.BifIndex()]
+		if !found {
+			k.log.Warn().
+				Uint32("calculatedIndex", resource.BifIndex()).
+				Str("resourceName", resource.NameToString()).
+				Msg("Did not find a bif file by the given index for the given resource")
+			continue
+		}
+
+		totalAudio++
+
+		// Store it for later
+		modelResource := &models.Resource{
+			Name: strings.ToLower(resource.NameToString()),
+			BifPath: strings.ToLower(filepath.Base(bifPath)),
+			Type: resource.Type,
+			TileSetIndex: resource.TileSetIndex(),
+			NonTileSetIndex: resource.NonTileSetIndex(),
+			BifIndex: resource.BifIndex(),
+		}
+
+		byIndex, found := modelResources[modelResource.BifPath]
+		if !found {
+			byIndex = map[uint32]*models.Resource{} 
+		}
+		_, found = modelResources[modelResource.BifPath][modelResource.NonTileSetIndex]
+		if found {
+			k.log.Warn().
+				Uint32("index", modelResource.NonTileSetIndex).
+				Str("bifPath", modelResource.BifPath).
+				Str("resource", modelResource.Name).
+				Msg("Already found and stored a resource with the given NonTileSetIndex in the given bif file; skipping")
+				continue
+		}
+		byIndex[modelResource.NonTileSetIndex] = modelResource
+		modelResources[modelResource.BifPath] = byIndex
+	}
+
+	totalMapped := 0
+	for _, byFile := range modelResources{
+		totalMapped += len(byFile)
+	}
+
+	k.log.Info().
+		Int("totalResources", len(k.ResourceEntries)).
+		Int("totalAudioResources", totalAudio).
+		Int("totalMappedByFile", totalMapped).
+		Int("filesMapped", len(modelResources)).
+		Msg("Determined audio resources")
+
+	return modelResources
 }
