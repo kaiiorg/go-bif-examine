@@ -18,6 +18,13 @@ func (r *GormExamineRepository) GetAllProjects() ([]*models.Project, error) {
 	return results, nil
 }
 
+func (r *GormExamineRepository) CreateProject(project *models.Project) (uint, error) {
+	if err := r.db.Create(project).Error; err != nil {
+		return 0, err
+	}
+	return project.ID, nil
+}
+
 func (r *GormExamineRepository) DeleteProject(projectId uint) error {
 	project := &models.Project{
 		Model: gorm.Model{ID: projectId},
