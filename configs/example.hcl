@@ -11,7 +11,7 @@ db {
     host     = "localhost"
     port     = 5432
     username = "postgres"
-    password = "password"
+    password = "6a6009de9ad94e098b327db02706b3bc"
     ssl      = false
 }
 

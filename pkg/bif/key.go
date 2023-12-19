@@ -21,14 +21,6 @@ type Key struct {
 }
 
 func NewKeyFromFile(path string, log zerolog.Logger) (*Key, error) {
-	k := &Key{
-		Header:               NewKeyHeader(),
-		BifFileNameToEntries: map[string]*KeyBifEntry{},
-		BifIndexToFileName:   map[uint32]string{},
-		ResourceEntries:      []*KeyBifResourceEntry{},
-		log:                  log,
-	}
-
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -41,17 +33,29 @@ func NewKeyFromFile(path string, log zerolog.Logger) (*Key, error) {
 		return nil, err
 	}
 
-	err = k.readAndValidateHeader(file, fileInfo.Size())
+	return NewKey(file, fileInfo.Size(), log)
+}
+
+func NewKey(file ReaderSeekerReaderAt, fileSize int64, log zerolog.Logger) (*Key, error) {
+	k := &Key{
+		Header:               NewKeyHeader(),
+		BifFileNameToEntries: map[string]*KeyBifEntry{},
+		BifIndexToFileName:   map[uint32]string{},
+		ResourceEntries:      []*KeyBifResourceEntry{},
+		log:                  log,
+	}
+
+	err := k.readAndValidateHeader(file, fileSize)
 	if err != nil {
 		return nil, err
 	}
 
-	err = k.readBifFileNameToEntries(file, fileInfo.Size())
+	err = k.readBifFileNameToEntries(file, fileSize)
 	if err != nil {
 		return nil, err
 	}
 
-	err = k.readResourceEntries(file, fileInfo.Size())
+	err = k.readResourceEntries(file, fileSize)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +63,7 @@ func NewKeyFromFile(path string, log zerolog.Logger) (*Key, error) {
 	return k, nil
 }
 
-func (k *Key) readAndValidateHeader(file *os.File, fileSize int64) error {
+func (k *Key) readAndValidateHeader(file ReaderSeekerReaderAt, fileSize int64) error {
 	// Make sure we're at the start of the file
 	_, err := file.Seek(0, 0)
 	if err != nil {
@@ -81,7 +85,7 @@ func (k *Key) readAndValidateHeader(file *os.File, fileSize int64) error {
 	return nil
 }
 
-func (k *Key) readBifFileNameToEntries(file *os.File, fileSize int64) error {
+func (k *Key) readBifFileNameToEntries(file ReaderSeekerReaderAt, fileSize int64) error {
 	// Read each bif entry until we've read all of them or have an error
 	for i := uint32(0); i < k.Header.BifEntryCount; i++ {
 		// Make sure we're at the start of the bif entries + our current bif offset
@@ -125,7 +129,7 @@ func (k *Key) readBifFileNameToEntries(file *os.File, fileSize int64) error {
 	return nil
 }
 
-func (k *Key) readResourceEntries(file *os.File, fileSize int64) error {
+func (k *Key) readResourceEntries(file ReaderSeekerReaderAt, fileSize int64) error {
 	// Read each resource entry until we've read all of them or have an error
 	for i := uint32(0); i < k.Header.ResourceEntryCount; i++ {
 		// Make sure we're at the start of the bif entries + our current bif offset

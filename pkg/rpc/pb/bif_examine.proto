@@ -4,14 +4,65 @@ package pb;
 option go_package = "./pb";
 
 service BifExamine {
-    rpc UploadBifKey (UploadBifKeyRequest) returns (UploadBifKeyResponse);
+    rpc GetAllProjects (GetAllProjectsRequest) returns (GetAllProjectsResponse);
+    rpc DeleteProject (DeleteProjectRequest) returns (DeleteProjectResponse);
+
+    rpc UploadKey (UploadKeyRequest) returns (UploadKeyResponse);
+    rpc UploadBif (UploadBifRequest) returns (UploadBifResponse);
 }
 
-message UploadBifKeyRequest {
+///////////////////////////////////////
+// GetAllProjects
+///////////////////////////////////////
+message Project {
+    uint32 id = 1;
+    string name = 2;
+    string original_key_file_name = 3;
+}
+message GetAllProjectsRequest {}
+message GetAllProjectsResponse {
+    string error_description = 1;
+    repeated Project projects = 2;
+}
+
+///////////////////////////////////////
+// DeleteProject
+///////////////////////////////////////
+message DeleteProjectRequest {
+    uint32 project_id = 1;
+}
+message DeleteProjectResponse {
+    string error_description = 1;
+}
+
+///////////////////////////////////////
+// UploadKey
+///////////////////////////////////////
+message Key {
+    string parsed_version = 1;
+    string parsed_signature = 2;
+    uint32 resource_entry_count = 3;
+    repeated string bif_files_containing_audio = 4;
+}
+message UploadKeyRequest {
     string project_name = 1;
-    bytes contents = 2;
+    string file_name = 2;
+    bytes contents = 3;
+}
+message UploadKeyResponse {
+    string error_description = 1;
+    uint32 project_id = 2;
+    Key key = 3;
 }
 
-message UploadBifKeyResponse {
-    bool ok = 1;
+///////////////////////////////////////
+// UploadBif
+///////////////////////////////////////
+message UploadBifRequest {
+    uint32 project_id = 1;
+    string file_name = 2;
+    bytes contents = 3;
+}
+message UploadBifResponse {
+    string error_description = 1;
 }

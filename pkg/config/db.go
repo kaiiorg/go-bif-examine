@@ -21,6 +21,14 @@ func (db *Database) ConnectionString() string {
 		db.Username,
 		db.Password,
 		db.DbName,
-		db.Ssl,
+		db.toPostgresqlSslMode(),
 	)
+}
+
+func (db *Database) toPostgresqlSslMode() string {
+	if db.Ssl {
+		return "require"
+	} else {
+		return "disable"
+	}
 }
