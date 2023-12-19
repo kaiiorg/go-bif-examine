@@ -10,9 +10,9 @@ type Resource struct {
 	BifPath string
 	Type    uint16
 
-	TileSetIndex uint32
+	TileSetIndex    uint32
 	NonTileSetIndex uint32
-	BifIndex uint32
+	BifIndex        uint32
 
 	BifSha256 string
 }

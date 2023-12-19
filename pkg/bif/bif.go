@@ -1,15 +1,15 @@
 package bif
 
 import (
-	"os"
 	"encoding/binary"
+	"os"
 
 	"github.com/rs/zerolog"
 )
 
 type Bif struct {
 	Header *BifHeader
-	Files map[uint32]*BifV1FileEntry
+	Files  map[uint32]*BifV1FileEntry
 
 	log zerolog.Logger
 }
@@ -17,8 +17,8 @@ type Bif struct {
 func NewBifFromFile(path string, log zerolog.Logger) (*Bif, error) {
 	b := &Bif{
 		Header: NewBifHeader(),
-		Files: map[uint32]*BifV1FileEntry{},
-		log: log,
+		Files:  map[uint32]*BifV1FileEntry{},
+		log:    log,
 	}
 
 	file, err := os.Open(path)
@@ -45,7 +45,6 @@ func NewBifFromFile(path string, log zerolog.Logger) (*Bif, error) {
 
 	return b, nil
 }
-
 
 func (b *Bif) readAndValidateHeader(file *os.File, fileSize int64) error {
 	// Make sure we're at the start of the file

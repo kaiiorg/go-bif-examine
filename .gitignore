@@ -2,7 +2,9 @@
 *.bif
 *.key
 
+.idea/
 bin/
 protoc/
 
 output.json
+*.wav

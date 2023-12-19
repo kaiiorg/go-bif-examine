@@ -2,9 +2,9 @@ package bif
 
 import (
 	"encoding/binary"
+	"os"
 	"path/filepath"
 	"strings"
-	"os"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/models"
 
@@ -178,17 +178,17 @@ func (k *Key) AudioEntriesToModel() map[string]map[uint32]*models.Resource {
 
 		// Store it for later
 		modelResource := &models.Resource{
-			Name: strings.ToLower(resource.NameToString()),
-			BifPath: strings.ToLower(filepath.Base(bifPath)),
-			Type: resource.Type,
-			TileSetIndex: resource.TileSetIndex(),
+			Name:            strings.ToLower(resource.NameToString()),
+			BifPath:         strings.ToLower(filepath.Base(bifPath)),
+			Type:            resource.Type,
+			TileSetIndex:    resource.TileSetIndex(),
 			NonTileSetIndex: resource.NonTileSetIndex(),
-			BifIndex: resource.BifIndex(),
+			BifIndex:        resource.BifIndex(),
 		}
 
 		byIndex, found := modelResources[modelResource.BifPath]
 		if !found {
-			byIndex = map[uint32]*models.Resource{} 
+			byIndex = map[uint32]*models.Resource{}
 		}
 		_, found = modelResources[modelResource.BifPath][modelResource.NonTileSetIndex]
 		if found {
@@ -197,14 +197,14 @@ func (k *Key) AudioEntriesToModel() map[string]map[uint32]*models.Resource {
 				Str("bifPath", modelResource.BifPath).
 				Str("resource", modelResource.Name).
 				Msg("Already found and stored a resource with the given NonTileSetIndex in the given bif file; skipping")
-				continue
+			continue
 		}
 		byIndex[modelResource.NonTileSetIndex] = modelResource
 		modelResources[modelResource.BifPath] = byIndex
 	}
 
 	totalMapped := 0
-	for _, byFile := range modelResources{
+	for _, byFile := range modelResources {
 		totalMapped += len(byFile)
 	}
 

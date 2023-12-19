@@ -7,12 +7,12 @@ import (
 const (
 	MaxFileNameLength = 1024
 
-	KeyHeaderLength = 24
+	KeyHeaderLength           = 24
 	KeyBifResourceEntryLength = 14
-	KeyBifEntryLength = 12
+	KeyBifEntryLength         = 12
 
-	BifHeaderLength = 20
-	BifV1EntryLength = 16
+	BifHeaderLength         = 20
+	BifV1EntryLength        = 16
 	BifV1TilesetEntryLength = 20
 )
 

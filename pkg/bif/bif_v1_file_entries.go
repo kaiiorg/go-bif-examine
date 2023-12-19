@@ -1,10 +1,10 @@
 package bif
 
 import (
-	"os"
+	"encoding/binary"
 	"errors"
 	"fmt"
-	"encoding/binary"
+	"os"
 )
 
 // BifV1FileEntry describes a file entry in the bif file as defined by IESDP. The order and size of each
@@ -27,7 +27,7 @@ func (entry *BifV1FileEntry) Validate(fileSize int64) error {
 		return errors.Join(ErrOffsetToBifDataExceedsFile, fmt.Errorf("%d > %d", entry.OffsetToData, fileSize))
 	}
 
-	if int64(entry.OffsetToData) + int64(entry.Size) > fileSize {
+	if int64(entry.OffsetToData)+int64(entry.Size) > fileSize {
 		return errors.Join(ErrBifDataExceedsFile, fmt.Errorf("%d + %d > %d", entry.OffsetToData, entry.Size, fileSize))
 	}
 

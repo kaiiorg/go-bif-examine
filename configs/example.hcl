@@ -21,6 +21,7 @@ s3 {
     host = "localhost"
     port = 9000
     region = "us-east-1" // MinIO does not use regions, but we still have to provide something
+    force_path_style = true // Needed to force ${scheme}://${host}:${port}/${bucket}/${object_key} instead of ${scheme}://${bucket}.${host}:${port}/${object_key}
     bucket = "go-bif-examine" // Expects bucket to be setup ahead of time
     access_key = "KfOYD0GuCtCkNmRetguA"
     secret_key = "n62L0XIsUDOxufML4j5wnqdn8YxrbpnJWu78DiUt"
