@@ -6,11 +6,14 @@ import (
 	"github.com/kaiiorg/go-bif-examine/pkg/bif"
 	"github.com/kaiiorg/go-bif-examine/pkg/models"
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc/pb"
+	"time"
 )
 
 func (s *Server) UploadKey(ctx context.Context, req *pb.UploadKeyRequest) (*pb.UploadKeyResponse, error) {
 	contents := req.GetContents()
-	s.log.Info().Int("contentsLength", len(contents)).Msg("UploadKey")
+	start := time.Now()
+	s.log.Info().Int("contentsLength", len(contents)).Msg("UploadKey start")
+	defer s.log.Info().Str("duration", time.Since(start).String()).Msg("UploadKey end")
 	resp := &pb.UploadKeyResponse{}
 
 	// Parse the contents as a bif key
@@ -20,35 +23,50 @@ func (s *Server) UploadKey(ctx context.Context, req *pb.UploadKeyRequest) (*pb.U
 		resp.ErrorDescription = err.Error()
 		return resp, err
 	}
-	// Determine what bif files the key claims contains audio resources
-	audioResources := key.AudioEntriesToModel()
 
 	// Create project record and store it in the DB
 	project := &models.Project{
 		Name:                req.GetProjectName(),
 		OriginalKeyFileName: req.GetFileName(),
 	}
-	projectId, err := s.examineRepository.CreateProject(project)
+	project.ID, err = s.examineRepository.CreateProject(project)
 	if err != nil {
 		s.log.Warn().Err(err).Msg("Failed to save project to db")
 		resp.ErrorDescription = err.Error()
 		return resp, err
 	}
-	resp.ProjectId = uint32(projectId)
+	resp.ProjectId = uint32(project.ID)
+
+	// Determine what bif files the key claims contains audio resources
+	audioResources, bifsWithAudio := key.AudioEntriesToModel(project)
+
+	// Add each bif to the database
+	err = s.examineRepository.CreateManyBifs(bifsWithAudio)
+	if err != nil {
+		s.log.Error().Err(err).Int("count", len(bifsWithAudio)).Msg("Failed to add bifs to DB")
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
+
+	// Add each audio resource to the database
+	err = s.examineRepository.CreateManyResources(audioResources)
+	if err != nil {
+		s.log.Error().Err(err).Int("count", len(bifsWithAudio)).Msg("Failed to add resources to DB")
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
 
 	// Build the response key information
 	resp.Key = &pb.Key{
 		ParsedVersion:           key.Header.VersionToString(),
 		ParsedSignature:         key.Header.SignatureToString(),
 		ResourceEntryCount:      uint32(len(key.ResourceEntries)),
-		BifFilesContainingAudio: map[string]uint32{},
+		ResourcesWithAudio:      uint32(len(audioResources)),
+		BifFilesContainingAudio: []string{},
 	}
-	for bifFile, resources := range audioResources {
-		resp.Key.BifFilesContainingAudio[bifFile] = uint32(len(resources))
+	for _, bifWithAudio := range bifsWithAudio {
+		resp.Key.BifFilesContainingAudio = append(resp.Key.BifFilesContainingAudio, bifWithAudio.NameInKey)
 	}
-
-	// TODO create record mapping the project to all expected bif files and the S3 object key for that file
-	// TODO   the object will will be empty at first
 
 	return resp, nil
 }

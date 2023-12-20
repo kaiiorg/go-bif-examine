@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kaiiorg/go-bif-examine/pkg/bif"
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
 	"github.com/kaiiorg/go-bif-examine/pkg/models"
 	"github.com/kaiiorg/go-bif-examine/pkg/repositories/examine_repository"
@@ -132,6 +131,7 @@ func (be *BifExamine) Dev_GetSectionOfFile() {
 	be.log.Info().Msg("Wrote section from object to file")
 }
 
+/*
 func (be *BifExamine) Dev_ProcessKeyAndBifFiles() {
 	// Read the key; this will tell us what is in each bif file
 	key, err := bif.NewKeyFromFile("./test_bifs/chitin.key", be.log.With().Str("component", "bif-key").Logger())
@@ -183,6 +183,7 @@ func (be *BifExamine) Dev_ProcessKeyAndBifFiles() {
 	// Exit now; we're just testing stuff for later use
 	os.Exit(0)
 }
+*/
 
 func (be *BifExamine) Dev_FindRelevantBifs(audioResources map[string]map[uint32]*models.Resource) map[string]interface{} {
 	// Get the list of bif files and determine which ones we need to keep for asset extraction and

@@ -42,7 +42,8 @@ message Key {
     string parsed_version = 1;
     string parsed_signature = 2;
     uint32 resource_entry_count = 3;
-    map<string, uint32> bif_files_containing_audio = 4;
+    uint32 resources_with_audio = 5;
+    repeated string bif_files_containing_audio = 4;
 }
 message UploadKeyRequest {
     string project_name = 1;
