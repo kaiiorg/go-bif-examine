@@ -15,12 +15,6 @@ type Bif struct {
 }
 
 func NewBifFromFile(path string, log zerolog.Logger) (*Bif, error) {
-	b := &Bif{
-		Header: NewBifHeader(),
-		Files:  map[uint32]*BifV1FileEntry{},
-		log:    log,
-	}
-
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -33,12 +27,22 @@ func NewBifFromFile(path string, log zerolog.Logger) (*Bif, error) {
 		return nil, err
 	}
 
-	err = b.readAndValidateHeader(file, fileInfo.Size())
+	return NewBif(file, fileInfo.Size(), log)
+}
+
+func NewBif(file ReaderSeekerReaderAt, fileSize int64, log zerolog.Logger) (*Bif, error) {
+	b := &Bif{
+		Header: NewBifHeader(),
+		Files:  map[uint32]*BifV1FileEntry{},
+		log:    log,
+	}
+
+	err := b.readAndValidateHeader(file, fileSize)
 	if err != nil {
 		return nil, err
 	}
 
-	err = b.readAndValidateBifEntries(file, fileInfo.Size())
+	err = b.readAndValidateBifEntries(file, fileSize)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +50,7 @@ func NewBifFromFile(path string, log zerolog.Logger) (*Bif, error) {
 	return b, nil
 }
 
-func (b *Bif) readAndValidateHeader(file *os.File, fileSize int64) error {
+func (b *Bif) readAndValidateHeader(file ReaderSeekerReaderAt, fileSize int64) error {
 	// Make sure we're at the start of the file
 	_, err := file.Seek(0, 0)
 	if err != nil {
@@ -68,7 +72,7 @@ func (b *Bif) readAndValidateHeader(file *os.File, fileSize int64) error {
 	return nil
 }
 
-func (b *Bif) readAndValidateBifEntries(file *os.File, fileSize int64) error {
+func (b *Bif) readAndValidateBifEntries(file ReaderSeekerReaderAt, fileSize int64) error {
 	for i := uint32(0); i < b.Header.FileEntryCount; i++ {
 		// Make sure we're at the start of the bif entries + our current bif offset
 		_, err := file.Seek(int64(b.Header.OffsetToFileEntries)+int64(BifV1EntryLength)*int64(i), 0)

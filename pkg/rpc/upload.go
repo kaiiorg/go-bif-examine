@@ -6,6 +6,9 @@ import (
 	"github.com/kaiiorg/go-bif-examine/pkg/bif"
 	"github.com/kaiiorg/go-bif-examine/pkg/models"
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc/pb"
+	"github.com/kaiiorg/go-bif-examine/pkg/util"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -72,7 +75,51 @@ func (s *Server) UploadKey(ctx context.Context, req *pb.UploadKeyRequest) (*pb.U
 }
 
 func (s *Server) UploadBif(ctx context.Context, req *pb.UploadBifRequest) (*pb.UploadBifResponse, error) {
-	s.log.Info().Msg("UploadBif")
+	contents := req.GetContents()
+	start := time.Now()
+	s.log.Info().Int("contentsLength", len(contents)).Msg("UploadBif start")
+	defer s.log.Info().Str("duration", time.Since(start).String()).Msg("UploadBif end")
 	resp := &pb.UploadBifResponse{}
+
+	// Parse the contents as a bif file
+	bif, err := bif.NewBif(bytes.NewReader(contents), int64(len(contents)), s.log.With().Str("component", "bif").Logger())
+	if err != nil {
+		s.log.Warn().Err(err).Msg("Failed to parse bif")
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
+
+	// Calculate sha256 hash
+	bifHash, err := util.CalculateSha256(bytes.NewReader(contents))
+	if err != nil {
+		s.log.Warn().Err(err).Msg("Failed to calculate hash of bif file contents")
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
+
+	// Build the model that'll go into the DB
+	modelBif := &models.Bif{
+		Name:       strings.ToLower(filepath.Base(req.GetFileName())),
+		NameInKey:  req.GetFileName(),
+		ObjectKey:  &bifHash,
+		ObjectHash: &bifHash,
+	}
+
+	// Upload the object
+	err = s.storage.UploadObject(*modelBif.ObjectKey, bytes.NewReader(contents))
+	if err != nil {
+		s.log.Warn().Err(err).Msg("Failed to upload bif file to S3 storage")
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
+
+	// TODO Add the bif file to the DB
+
+	// TODO Update existing records with contents of bif entries
+	for bifIndex, bifEntry := range bif.Files {
+		_ = bifIndex
+		_ = bifEntry
+	}
+
 	return resp, nil
 }

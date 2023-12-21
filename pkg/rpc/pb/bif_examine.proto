@@ -61,8 +61,11 @@ message UploadKeyResponse {
 ///////////////////////////////////////
 message UploadBifRequest {
     uint32 project_id = 1;
+    // Must provide file_name or name_in_key
     string file_name = 2;
-    bytes contents = 3;
+    // Must provide file_name or name_in_key
+    string name_in_key = 3;
+    bytes contents = 4;
 }
 message UploadBifResponse {
     string error_description = 1;

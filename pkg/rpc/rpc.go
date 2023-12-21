@@ -3,6 +3,7 @@ package rpc
 import (
 	"fmt"
 	"github.com/kaiiorg/go-bif-examine/pkg/repositories/examine_repository"
+	"github.com/kaiiorg/go-bif-examine/pkg/storage"
 	"net"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
@@ -15,18 +16,21 @@ import (
 type Server struct {
 	pb.UnimplementedBifExamineServer
 
-	config            *config.Config
-	log               zerolog.Logger
-	grpcServer        *grpc.Server
+	config     *config.Config
+	log        zerolog.Logger
+	grpcServer *grpc.Server
+
+	storage           storage.BifStorage
 	examineRepository examine_repository.ExamineRepository
 }
 
-func New(examineRepository examine_repository.ExamineRepository, conf *config.Config, log zerolog.Logger) *Server {
+func New(examineRepository examine_repository.ExamineRepository, storage storage.BifStorage, conf *config.Config, log zerolog.Logger) *Server {
 	s := &Server{
 		config:            conf,
 		log:               log,
 		grpcServer:        grpc.NewServer(),
 		examineRepository: examineRepository,
+		storage:           storage,
 	}
 
 	return s

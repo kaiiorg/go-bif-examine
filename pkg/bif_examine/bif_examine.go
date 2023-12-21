@@ -2,10 +2,7 @@ package bif_examine
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"github.com/kaiiorg/go-bif-examine/pkg/repositories/gorm_logger"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,10 +34,12 @@ type BifExamine struct {
 }
 
 func New(conf *config.Config) (*BifExamine, error) {
+	// Setup S3 storage
 	s3Storage, err := storage.New(conf, log.With().Str("component", "storage").Logger())
 	if err != nil {
 		return nil, err
 	}
+	// Setup DB and repository
 	db, err := gorm.Open(
 		postgres.Open(conf.Db.ConnectionString()),
 		&gorm.Config{
@@ -54,11 +53,13 @@ func New(conf *config.Config) (*BifExamine, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Setup main struct along with the rpc and web components
 	be := &BifExamine{
 		config:            conf,
 		log:               log.With().Str("component", "general").Logger(),
 		storage:           s3Storage,
-		rpc:               rpc.New(examineRepository, conf, log.With().Str("component", "rpc").Logger()),
+		rpc:               rpc.New(examineRepository, s3Storage, conf, log.With().Str("component", "rpc").Logger()),
 		web:               web.New(conf, log.With().Str("component", "web").Logger()),
 		examineRepository: examineRepository,
 	}
@@ -89,31 +90,33 @@ func (be *BifExamine) Close() error {
 }
 
 func (be *BifExamine) Dev_UploadBifFiles() {
-	bifDir := "./test_bifs/data"
-	filesInDir, err := os.ReadDir(bifDir)
-	if err != nil {
-		be.log.Fatal().Err(err).Msg("Failed to read contents of bif dir")
-	}
-
-	for _, dirEntry := range filesInDir {
-		// Skip anything that isn't a .bif
-		if filepath.Ext(dirEntry.Name()) != ".bif" {
-			be.log.Trace().Str("found", filepath.Ext(dirEntry.Name())).Msg("Found a file, but it isn't a .bif file")
-			continue
-		}
-		bifPath := filepath.Join(bifDir, dirEntry.Name())
-
-		// Calculate the SHA256 hash of the file
-		hash, err := sha256OfFile(bifPath)
+	/*
+		bifDir := "./test_bifs/data"
+		filesInDir, err := os.ReadDir(bifDir)
 		if err != nil {
-			be.log.Fatal().Err(err).Msg("Failed to calculate hash of bif")
+			be.log.Fatal().Err(err).Msg("Failed to read contents of bif dir")
 		}
-		// Upload to s3
-		err = be.storage.UploadFileFromTempFile(hash, bifPath)
-		if err != nil {
-			be.log.Fatal().Err(err).Msg("Failed to upload bif")
+
+		for _, dirEntry := range filesInDir {
+			// Skip anything that isn't a .bif
+			if filepath.Ext(dirEntry.Name()) != ".bif" {
+				be.log.Trace().Str("found", filepath.Ext(dirEntry.Name())).Msg("Found a file, but it isn't a .bif file")
+				continue
+			}
+			bifPath := filepath.Join(bifDir, dirEntry.Name())
+
+			// Calculate the SHA256 hash of the file
+			hash, err := sha256OfFile(bifPath)
+			if err != nil {
+				be.log.Fatal().Err(err).Msg("Failed to calculate hash of bif")
+			}
+			// Upload to s3
+			err = be.storage.UploadFileFromTempFile(hash, bifPath)
+			if err != nil {
+				be.log.Fatal().Err(err).Msg("Failed to upload bif")
+			}
 		}
-	}
+	*/
 }
 
 func (be *BifExamine) Dev_GetSectionOfFile() {
@@ -211,20 +214,4 @@ func (be *BifExamine) Dev_FindRelevantBifs(audioResources map[string]map[uint32]
 		}
 	}
 	return bifsFoundNeededMap
-}
-
-func sha256OfFile(filePath string) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	hash := sha256.New()
-
-	if _, err := io.Copy(hash, file); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(hash.Sum(nil)), nil
 }

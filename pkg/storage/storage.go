@@ -53,23 +53,28 @@ func New(conf *config.Config, log zerolog.Logger) (*Storage, error) {
 	return s, nil
 }
 
-// UploadFileFromTempFile uploads the contents of the given file to S3 compatible storage
-func (s *Storage) UploadFileFromTempFile(objectKey, pathToTempBif string) error {
+// UploadObjectFromTempFile uploads the contents of the given file to S3 compatible storage
+func (s *Storage) UploadObjectFromTempFile(objectKey, pathToTempBif string) error {
 	file, err := os.Open(pathToTempBif)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
+	return s.UploadObject(objectKey, file)
+}
+
+// UploadObject uploads the contents of the given reader to S3 compatible storage
+func (s *Storage) UploadObject(objectKey string, reader io.ReadSeeker) error {
 	// Create s3 request to put the data in the configured bucket
 	putObjectInput := &s3.PutObjectInput{
 		Bucket: aws.String(s.config.S3.Bucket),
 		Key:    aws.String(objectKey),
-		Body:   aws.ReadSeekCloser(file),
+		Body:   reader,
 	}
 
 	// Make the request
-	_, err = s.s3Client.PutObject(putObjectInput)
+	_, err := s.s3Client.PutObject(putObjectInput)
 	if err != nil {
 		s.log.Error().
 			Err(err).
@@ -78,7 +83,6 @@ func (s *Storage) UploadFileFromTempFile(objectKey, pathToTempBif string) error 
 			Msg("Failed to upload object")
 		return err
 	}
-
 	return nil
 }
 
