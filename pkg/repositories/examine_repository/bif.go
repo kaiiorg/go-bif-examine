@@ -1,6 +1,10 @@
 package examine_repository
 
-import "github.com/kaiiorg/go-bif-examine/pkg/models"
+import (
+	"github.com/kaiiorg/go-bif-examine/pkg/models"
+
+	"gorm.io/gorm"
+)
 
 func (r *GormExamineRepository) CreateManyBifs(bifs []*models.Bif) error {
 	return r.db.Create(&bifs).Error
@@ -21,6 +25,19 @@ func (r *GormExamineRepository) GetBifByNormalizedNameOrNameInKey(normalizedBifN
 	}
 
 	return bifRecord, nil
+}
+
+func (r *GormExamineRepository) GetBifById(bifId uint) (*models.Bif, error) {
+	bif := &models.Bif{
+		Model: gorm.Model{
+			ID: bifId,
+		},
+	}
+	err := r.db.First(bif).Error
+	if err != nil {
+		return nil, err
+	}
+	return bif, nil
 }
 
 func (r *GormExamineRepository) UpdateBif(bif *models.Bif) error {

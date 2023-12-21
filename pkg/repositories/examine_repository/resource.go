@@ -2,6 +2,7 @@ package examine_repository
 
 import (
 	"errors"
+	"gorm.io/gorm"
 	"sync"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/models"
@@ -48,6 +49,19 @@ func (r *GormExamineRepository) FindProjectResourcesForBif(projectId uint, bifId
 		return nil, err
 	}
 	return resources, nil
+}
+
+func (r *GormExamineRepository) GetResourceById(resourceId uint) (*models.Resource, error) {
+	resource := &models.Resource{
+		Model: gorm.Model{
+			ID: resourceId,
+		},
+	}
+	err := r.db.First(resource).Error
+	if err != nil {
+		return nil, err
+	}
+	return resource, nil
 }
 
 func (r *GormExamineRepository) UpdateResource(resource *models.Resource) error {

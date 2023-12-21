@@ -1,6 +1,9 @@
 build:
 	go build -o ./bin/ ./cmd/go-bif-examine
 
+build-cli:
+	go build -o ./bin/ ./cmd/go-bif-examine-cli
+
 fmt:
 	gofmt -w -s pkg cmd
 

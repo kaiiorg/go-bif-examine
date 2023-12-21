@@ -9,6 +9,8 @@ service BifExamine {
 
     rpc UploadKey (UploadKeyRequest) returns (UploadKeyResponse);
     rpc UploadBif (UploadBifRequest) returns (UploadBifResponse);
+
+    rpc DownloadResource (DownloadResourceRequest) returns (DownloadResourceResponse);
 }
 
 ///////////////////////////////////////
@@ -71,4 +73,19 @@ message UploadBifResponse {
     string error_description = 1;
     uint32 resources_found = 2;
     uint32 resources_not_found = 3;
+}
+
+
+///////////////////////////////////////
+// DownloadResource
+///////////////////////////////////////
+message DownloadResourceRequest {
+    uint32 resource_id = 1;
+}
+
+message DownloadResourceResponse {
+    string error_description = 1;
+    string name = 2;
+    uint32 size = 3;
+    bytes content = 4;
 }

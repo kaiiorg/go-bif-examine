@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v4.25.1
-// source: pkg/rpc/pb/bif_examine.proto
+// source: pkg/rpc.go/pb/bif_examine.proto
 
 package pb
 
@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	BifExamine_GetAllProjects_FullMethodName = "/pb.BifExamine/GetAllProjects"
-	BifExamine_DeleteProject_FullMethodName  = "/pb.BifExamine/DeleteProject"
-	BifExamine_UploadKey_FullMethodName      = "/pb.BifExamine/UploadKey"
-	BifExamine_UploadBif_FullMethodName      = "/pb.BifExamine/UploadBif"
+	BifExamine_GetAllProjects_FullMethodName   = "/pb.BifExamine/GetAllProjects"
+	BifExamine_DeleteProject_FullMethodName    = "/pb.BifExamine/DeleteProject"
+	BifExamine_UploadKey_FullMethodName        = "/pb.BifExamine/UploadKey"
+	BifExamine_UploadBif_FullMethodName        = "/pb.BifExamine/UploadBif"
+	BifExamine_DownloadResource_FullMethodName = "/pb.BifExamine/DownloadResource"
 )
 
 // BifExamineClient is the client API for BifExamine service.
@@ -33,6 +34,7 @@ type BifExamineClient interface {
 	DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error)
 	UploadKey(ctx context.Context, in *UploadKeyRequest, opts ...grpc.CallOption) (*UploadKeyResponse, error)
 	UploadBif(ctx context.Context, in *UploadBifRequest, opts ...grpc.CallOption) (*UploadBifResponse, error)
+	DownloadResource(ctx context.Context, in *DownloadResourceRequest, opts ...grpc.CallOption) (*DownloadResourceResponse, error)
 }
 
 type bifExamineClient struct {
@@ -79,6 +81,15 @@ func (c *bifExamineClient) UploadBif(ctx context.Context, in *UploadBifRequest, 
 	return out, nil
 }
 
+func (c *bifExamineClient) DownloadResource(ctx context.Context, in *DownloadResourceRequest, opts ...grpc.CallOption) (*DownloadResourceResponse, error) {
+	out := new(DownloadResourceResponse)
+	err := c.cc.Invoke(ctx, BifExamine_DownloadResource_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BifExamineServer is the server API for BifExamine service.
 // All implementations must embed UnimplementedBifExamineServer
 // for forward compatibility
@@ -87,6 +98,7 @@ type BifExamineServer interface {
 	DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error)
 	UploadKey(context.Context, *UploadKeyRequest) (*UploadKeyResponse, error)
 	UploadBif(context.Context, *UploadBifRequest) (*UploadBifResponse, error)
+	DownloadResource(context.Context, *DownloadResourceRequest) (*DownloadResourceResponse, error)
 	mustEmbedUnimplementedBifExamineServer()
 }
 
@@ -105,6 +117,9 @@ func (UnimplementedBifExamineServer) UploadKey(context.Context, *UploadKeyReques
 }
 func (UnimplementedBifExamineServer) UploadBif(context.Context, *UploadBifRequest) (*UploadBifResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadBif not implemented")
+}
+func (UnimplementedBifExamineServer) DownloadResource(context.Context, *DownloadResourceRequest) (*DownloadResourceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DownloadResource not implemented")
 }
 func (UnimplementedBifExamineServer) mustEmbedUnimplementedBifExamineServer() {}
 
@@ -191,6 +206,24 @@ func _BifExamine_UploadBif_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BifExamine_DownloadResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DownloadResourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BifExamineServer).DownloadResource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BifExamine_DownloadResource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BifExamineServer).DownloadResource(ctx, req.(*DownloadResourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BifExamine_ServiceDesc is the grpc.ServiceDesc for BifExamine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -214,7 +247,11 @@ var BifExamine_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "UploadBif",
 			Handler:    _BifExamine_UploadBif_Handler,
 		},
+		{
+			MethodName: "DownloadResource",
+			Handler:    _BifExamine_DownloadResource_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pkg/rpc/pb/bif_examine.proto",
+	Metadata: "pkg/rpc.go/pb/bif_examine.proto",
 }
