@@ -18,6 +18,19 @@ func (r *GormExamineRepository) GetAllProjects() ([]*models.Project, error) {
 	return results, nil
 }
 
+func (r *GormExamineRepository) GetProjectById(projectId uint) (*models.Project, error) {
+	project := &models.Project{
+		Model: gorm.Model{
+			ID: projectId,
+		},
+	}
+	err := r.db.First(project).Error
+	if err != nil {
+		return nil, err
+	}
+	return project, nil
+}
+
 func (r *GormExamineRepository) CreateProject(project *models.Project) (uint, error) {
 	if err := r.db.Create(project).Error; err != nil {
 		return 0, err

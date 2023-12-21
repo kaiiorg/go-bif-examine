@@ -69,4 +69,6 @@ message UploadBifRequest {
 }
 message UploadBifResponse {
     string error_description = 1;
+    uint32 resources_found = 2;
+    uint32 resources_not_found = 3;
 }

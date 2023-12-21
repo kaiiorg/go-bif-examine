@@ -3,13 +3,17 @@ package rpc
 import (
 	"bytes"
 	"context"
+	"errors"
+	"time"
+
 	"github.com/kaiiorg/go-bif-examine/pkg/bif"
 	"github.com/kaiiorg/go-bif-examine/pkg/models"
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc/pb"
 	"github.com/kaiiorg/go-bif-examine/pkg/util"
-	"path/filepath"
-	"strings"
-	"time"
+)
+
+var (
+	ErrMustProvideFilenameOrNameInKey = errors.New("must provide either the normalized filename or the exact string listed in the key file")
 )
 
 func (s *Server) UploadKey(ctx context.Context, req *pb.UploadKeyRequest) (*pb.UploadKeyResponse, error) {
@@ -81,6 +85,35 @@ func (s *Server) UploadBif(ctx context.Context, req *pb.UploadBifRequest) (*pb.U
 	defer s.log.Info().Str("duration", time.Since(start).String()).Msg("UploadBif end")
 	resp := &pb.UploadBifResponse{}
 
+	// Make sure that either the file name or the name in key were set
+	if req.GetFileName() == "" && req.GetNameInKey() == "" {
+		resp.ErrorDescription = ErrMustProvideFilenameOrNameInKey.Error()
+		return resp, ErrMustProvideFilenameOrNameInKey
+	}
+
+	// Find the project related to this file
+	project, err := s.examineRepository.GetProjectById(uint(req.GetProjectId()))
+	if err != nil {
+		s.log.Warn().Err(err).Msg("Failed to find project record related to this bif")
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
+
+	// Find the existing bif record related to this file
+	modelBif, err := s.examineRepository.GetBifByNormalizedNameOrNameInKey(req.GetFileName(), req.GetNameInKey())
+	if err != nil {
+		s.log.Warn().Err(err).Msg("Failed to find bif record")
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
+
+	// Find the resources that are expected to live in this file
+	relatedResources, err := s.examineRepository.FindProjectResourcesForBif(project.ID, modelBif.ID)
+	if err != nil {
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
+
 	// Parse the contents as a bif file
 	bif, err := bif.NewBif(bytes.NewReader(contents), int64(len(contents)), s.log.With().Str("component", "bif").Logger())
 	if err != nil {
@@ -97,13 +130,9 @@ func (s *Server) UploadBif(ctx context.Context, req *pb.UploadBifRequest) (*pb.U
 		return resp, err
 	}
 
-	// Build the model that'll go into the DB
-	modelBif := &models.Bif{
-		Name:       strings.ToLower(filepath.Base(req.GetFileName())),
-		NameInKey:  req.GetFileName(),
-		ObjectKey:  &bifHash,
-		ObjectHash: &bifHash,
-	}
+	// Update contents of the existing bif model
+	modelBif.ObjectKey = &bifHash
+	modelBif.ObjectHash = &bifHash
 
 	// Upload the object
 	err = s.storage.UploadObject(*modelBif.ObjectKey, bytes.NewReader(contents))
@@ -113,12 +142,32 @@ func (s *Server) UploadBif(ctx context.Context, req *pb.UploadBifRequest) (*pb.U
 		return resp, err
 	}
 
-	// TODO Add the bif file to the DB
+	// Update the existing record
+	err = s.examineRepository.UpdateBif(modelBif)
+	if err != nil {
+		s.log.Warn().Err(err).Msg("Failed to update bif record")
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
 
-	// TODO Update existing records with contents of bif entries
-	for bifIndex, bifEntry := range bif.Files {
-		_ = bifIndex
-		_ = bifEntry
+	for _, resource := range relatedResources {
+		// Check if the bif contains the resource the key claims that is there
+		bifEntry, found := bif.Files[resource.NonTileSetIndex]
+		if !found {
+			resp.ResourcesNotFound++
+			continue
+		}
+		resp.ResourcesFound++
+
+		// Update our resource record
+		resource.OffsetToData = bifEntry.OffsetToData
+		resource.Size = bifEntry.Size
+		err = s.examineRepository.UpdateResource(resource)
+		if err != nil {
+			s.log.Warn().Err(err).Msg("Failed to update resource record")
+			resp.ErrorDescription = err.Error()
+			return resp, err
+		}
 	}
 
 	return resp, nil
