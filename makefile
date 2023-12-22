@@ -4,6 +4,9 @@ build:
 build-cli:
 	go build -o ./bin/ ./cmd/go-bif-examine-cli
 
+build-whisperer:
+	go build -o ./bin/ ./cmd/whisperer
+
 fmt:
 	gofmt -w -s pkg cmd
 
@@ -12,6 +15,10 @@ grpc:
 		--go_out=./pkg/rpc \
 		--go-grpc_out=./pkg/rpc \
 		./pkg/rpc/pb/bif_examine.proto
+	./protoc/bin/protoc \
+		--go_out=./pkg/rpc \
+		--go-grpc_out=./pkg/rpc \
+		./pkg/rpc/pb/wisperer.proto
 
 install_grpc_prereqs:
 	mkdir -p ./protoc

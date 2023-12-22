@@ -4,75 +4,75 @@ package pb;
 option go_package = "./pb";
 
 service BifExamine {
-    rpc GetAllProjects (GetAllProjectsRequest) returns (GetAllProjectsResponse);
-    rpc DeleteProject (DeleteProjectRequest) returns (DeleteProjectResponse);
+  rpc GetAllProjects(GetAllProjectsRequest) returns (GetAllProjectsResponse);
+  rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse);
 
-    rpc UploadKey (UploadKeyRequest) returns (UploadKeyResponse);
-    rpc UploadBif (UploadBifRequest) returns (UploadBifResponse);
+  rpc UploadKey(UploadKeyRequest) returns (UploadKeyResponse);
+  rpc UploadBif(UploadBifRequest) returns (UploadBifResponse);
 
-    rpc DownloadResource (DownloadResourceRequest) returns (DownloadResourceResponse);
+  rpc DownloadResource(DownloadResourceRequest) returns (DownloadResourceResponse);
 }
 
 ///////////////////////////////////////
 // GetAllProjects
 ///////////////////////////////////////
 message Project {
-    uint32 id = 1;
-    string name = 2;
-    string original_key_file_name = 3;
+  uint32 id = 1;
+  string name = 2;
+  string original_key_file_name = 3;
 }
 message GetAllProjectsRequest {}
 message GetAllProjectsResponse {
-    string error_description = 1;
-    repeated Project projects = 2;
+  string error_description = 1;
+  repeated Project projects = 2;
 }
 
 ///////////////////////////////////////
 // DeleteProject
 ///////////////////////////////////////
 message DeleteProjectRequest {
-    uint32 project_id = 1;
+  uint32 project_id = 1;
 }
 message DeleteProjectResponse {
-    string error_description = 1;
+  string error_description = 1;
 }
 
 ///////////////////////////////////////
 // UploadKey
 ///////////////////////////////////////
 message Key {
-    string parsed_version = 1;
-    string parsed_signature = 2;
-    uint32 resource_entry_count = 3;
-    uint32 resources_with_audio = 5;
-    repeated string bif_files_containing_audio = 4;
+  string parsed_version = 1;
+  string parsed_signature = 2;
+  uint32 resource_entry_count = 3;
+  uint32 resources_with_audio = 5;
+  repeated string bif_files_containing_audio = 4;
 }
 message UploadKeyRequest {
-    string project_name = 1;
-    string file_name = 2;
-    bytes contents = 3;
+  string project_name = 1;
+  string file_name = 2;
+  bytes contents = 3;
 }
 message UploadKeyResponse {
-    string error_description = 1;
-    uint32 project_id = 2;
-    Key key = 3;
+  string error_description = 1;
+  uint32 project_id = 2;
+  Key key = 3;
 }
 
 ///////////////////////////////////////
 // UploadBif
 ///////////////////////////////////////
 message UploadBifRequest {
-    uint32 project_id = 1;
-    // Must provide file_name or name_in_key
-    string file_name = 2;
-    // Must provide file_name or name_in_key
-    string name_in_key = 3;
-    bytes contents = 4;
+  uint32 project_id = 1;
+  // Must provide file_name or name_in_key
+  string file_name = 2;
+  // Must provide file_name or name_in_key
+  string name_in_key = 3;
+  bytes contents = 4;
 }
 message UploadBifResponse {
-    string error_description = 1;
-    uint32 resources_found = 2;
-    uint32 resources_not_found = 3;
+  string error_description = 1;
+  uint32 resources_found = 2;
+  uint32 resources_not_found = 3;
 }
 
 
@@ -80,12 +80,12 @@ message UploadBifResponse {
 // DownloadResource
 ///////////////////////////////////////
 message DownloadResourceRequest {
-    uint32 resource_id = 1;
+  uint32 resource_id = 1;
 }
 
 message DownloadResourceResponse {
-    string error_description = 1;
-    string name = 2;
-    uint32 size = 3;
-    bytes content = 4;
+  string error_description = 1;
+  string name = 2;
+  uint32 size = 3;
+  bytes content = 4;
 }

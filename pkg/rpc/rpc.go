@@ -15,6 +15,7 @@ import (
 
 type Server struct {
 	pb.UnimplementedBifExamineServer
+	pb.UnimplementedWhispererServer
 
 	config     *config.Config
 	log        zerolog.Logger
@@ -44,6 +45,7 @@ func (s *Server) Run() error {
 
 	go func() {
 		pb.RegisterBifExamineServer(s.grpcServer, s)
+		pb.RegisterWhispererServer(s.grpcServer, s)
 		if err := s.grpcServer.Serve(hostConn); err != nil {
 			s.log.Fatal().Err(err).Msg("gRPC server stopped!")
 		}

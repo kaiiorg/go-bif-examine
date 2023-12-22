@@ -9,17 +9,17 @@ This is mostly so I have an excuse to write something in Go.
 
 ## Components
 1. [ ] go-bif-examine
-    1. [ ] Front end API via via gRPC
+    1. [ ] Front end API via gRPC
         - Might need to use HTTP because a web frontend using gRPC might be more effort than I want to put into this
-        1. [ ] Upload KEY file to new project
+        1. [X] Upload KEY file to new project
             1. [X] Parse KEY data
             2. [X] Determine what BIF files contain what audio files
-            3. [ ] Save this information to DB
+            3. [X] Save this information to DB
         2. [ ] Upload many BIF files to project started by KEY file upload
             1. [X] Parse BIF data
                 1. [X] Save BIF file to S3 compatible storage
                 2. [X] Find the file's SHA256 hash to deduplicate data and to allow more than one version of the same file
-                3. [ ] Save BIF entry data to DB
+                3. [X] Save BIF entry data to DB
             2. [ ] Don't save BIF file if the KEY file says it doesn't have any audio files in it
         3. [ ] Schedule jobs to be sent to whisperer
         4. [ ] Allow unscheduling of jobs to be sent to whisperer
@@ -35,6 +35,31 @@ This is mostly so I have an excuse to write something in Go.
 3. [ ] examine-fe
     1. [ ] Barebones frontend used to interact with go-bif-examine
     2. [ ] To be embedded within go-bif-examine; no need to deploy separately
-4. [X] minio; deployed via docker compose
-5. [X] postgresql; deployed via docker compose
-6. [ ] Tests for everything
+4. [ ] go-bif-examin-cli
+    - CLI tool to make gRPC calls. Mostly for development purposes so I don't need to figure out the web stuff immediately
+    - [X] quick and dirty CLI to test that downloading resources work
+    - Commands, using cobra:
+      1. [ ] get
+         - [ ] projects
+      2. [ ] delete
+         - [ ] Project
+      3. [ ] upload
+         - [ ] key
+         - [ ] bif
+         - [ ] auto: point to game dir and automatically upload key and bifs?
+      4. [ ] download
+         - [ ] resource: save to file
+5. [X] minio; deployed via docker compose
+6. [X] postgresql; deployed via docker compose
+7. [ ] Tests for everything
+
+## Whisperer <-> go-bif-examine communication notes
+Thinking the easiest option for now would be to use exec in go to execute the existing CLI tool that [openai/whisper](https://github.com/openai/whisper) provides. 
+
+For simplicities' sake, I think I'll just have the tool check if whisper is installed, the nope out if it isn't there and print install instructions. If I run it in a container most of the time, that shouldn't be an issue. 
+And given the wonder of abstracting everything behind an interface, I can always change it later.
+
+Remember that this is a personal project that I'm doing for fun; I want to focus on the fun stuff, which is writing Go.
+
+### Job scheduling
+Thinking the easiest option would be for whisperer to connect as a gRPC client to go-bif-examine, then ask it for jobs.

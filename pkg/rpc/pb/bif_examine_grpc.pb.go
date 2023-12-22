@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v4.25.1
-// source: pkg/rpc.go/pb/bif_examine.proto
+// source: pkg/rpc/pb/bif_examine.proto
 
 package pb
 
@@ -253,5 +253,5 @@ var BifExamine_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pkg/rpc.go/pb/bif_examine.proto",
+	Metadata: "pkg/rpc/pb/bif_examine.proto",
 }

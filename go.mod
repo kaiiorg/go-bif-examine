@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/aws/aws-sdk-go v1.49.4
+	github.com/google/uuid v1.3.1
 	github.com/hashicorp/hcl/v2 v2.19.1
 	github.com/rs/zerolog v1.31.0
 	google.golang.org/grpc v1.60.0

@@ -2,14 +2,10 @@ package main
 
 import (
 	"flag"
-	"os"
-	"os/signal"
-	"syscall"
-
 	"github.com/kaiiorg/go-bif-examine/pkg/bif_examine"
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
+	"github.com/kaiiorg/go-bif-examine/pkg/util"
 
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -26,7 +22,7 @@ var (
 func main() {
 	// Parse CLI flags, configure logging, and load config file
 	flag.Parse()
-	configureLogging()
+	util.ConfigureLogging(*logLevel, applicationName, applicationDescription)
 	conf, err := config.LoadFromFile(*configPath)
 	if err != nil {
 		log.Fatal().
@@ -50,7 +46,7 @@ func main() {
 			Msg("Failed to start go-bif-examine")
 	}
 
-	waitForInterrupt()
+	util.WaitForInterrupt()
 
 	// Close BifExamine
 	err = be.Close()
@@ -59,29 +55,4 @@ func main() {
 			Err(err).
 			Msg("Failed to cleanly close go-bif-examine")
 	}
-}
-
-func configureLogging() {
-	// Configure pretty logs
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-
-	zerologLevel, err := zerolog.ParseLevel(*logLevel)
-	if err != nil || zerologLevel == zerolog.NoLevel {
-		zerologLevel = zerolog.InfoLevel
-		log.Warn().Str("givenLogLevel", *logLevel).Msg("Given an unexpected log level; defaulting to info level")
-	}
-	// Log application name and description just before changing the log level. This makes sure it always get printed
-	log.Info().
-		Str("applicationName", applicationName).
-		Str("applicationDescription", applicationDescription).
-		Send()
-
-	zerolog.SetGlobalLevel(zerologLevel)
-}
-
-func waitForInterrupt() {
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
-	sig := <-signalChan
-	log.Warn().Str("signal", sig.String()).Msg("Received signal, exiting")
 }
