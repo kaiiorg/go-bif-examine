@@ -9,4 +9,6 @@ type BifStorage interface {
 	UploadObject(objectKey string, reader io.ReadSeeker) error
 	// GetSectionFromObject pulls a section of data from the given object instead of the full object
 	GetSectionFromObject(objectKey string, offsetFromFileStart, size uint32) ([]byte, error)
+	// PresignGetObject created a presigned URL to use to get the requested object without needing to share the creds
+	PresignGetObject(objectKey string) (string, error)
 }

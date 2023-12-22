@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc/pb"
 )
 

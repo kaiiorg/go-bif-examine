@@ -2,12 +2,12 @@ package rpc
 
 import (
 	"fmt"
-	"github.com/kaiiorg/go-bif-examine/pkg/repositories/examine_repository"
-	"github.com/kaiiorg/go-bif-examine/pkg/storage"
 	"net"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
+	"github.com/kaiiorg/go-bif-examine/pkg/repositories/examine_repository"
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc/pb"
+	"github.com/kaiiorg/go-bif-examine/pkg/storage"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"

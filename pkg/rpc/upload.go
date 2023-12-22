@@ -3,17 +3,12 @@ package rpc
 import (
 	"bytes"
 	"context"
-	"errors"
 	"time"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/bif"
 	"github.com/kaiiorg/go-bif-examine/pkg/models"
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc/pb"
 	"github.com/kaiiorg/go-bif-examine/pkg/util"
-)
-
-var (
-	ErrMustProvideFilenameOrNameInKey = errors.New("must provide either the normalized filename or the exact string listed in the key file")
 )
 
 func (s *Server) UploadKey(ctx context.Context, req *pb.UploadKeyRequest) (*pb.UploadKeyResponse, error) {

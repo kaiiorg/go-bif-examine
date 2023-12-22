@@ -1,17 +1,18 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/config"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	s3Credentials "github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rs/zerolog"
 )
 
@@ -19,8 +20,8 @@ type Storage struct {
 	config *config.Config
 	log    zerolog.Logger
 
-	s3Session *session.Session
-	s3Client  *s3.S3
+	s3Client        *s3.Client
+	s3PresignClient *s3.PresignClient
 }
 
 func New(conf *config.Config, log zerolog.Logger) (*Storage, error) {
@@ -29,26 +30,23 @@ func New(conf *config.Config, log zerolog.Logger) (*Storage, error) {
 		Host:   fmt.Sprintf("%s:%d", conf.S3.Host, conf.S3.Port),
 	}
 
-	s3Session, err := session.NewSession(&aws.Config{
-		Endpoint:         aws.String(u.String()),
-		S3ForcePathStyle: aws.Bool(conf.S3.ForcePathStyle),
-		Region:           aws.String(conf.S3.Region),
-		Credentials: credentials.NewStaticCredentials(
-			conf.S3.AccessKey,
-			conf.S3.SecretKey,
-			"",
-		),
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	s := &Storage{
-		config:    conf,
-		log:       log,
-		s3Session: s3Session,
-		s3Client:  s3.New(s3Session),
+		config: conf,
+		log:    log,
+		s3Client: s3.New(
+			s3.Options{
+				BaseEndpoint: aws.String(u.String()),
+				Region:       conf.S3.Region,
+				UsePathStyle: conf.S3.ForcePathStyle,
+				Credentials: s3Credentials.NewStaticCredentialsProvider(
+					conf.S3.AccessKey,
+					conf.S3.SecretKey,
+					"",
+				),
+			},
+		),
 	}
+	s.s3PresignClient = s3.NewPresignClient(s.s3Client)
 
 	return s, nil
 }
@@ -74,7 +72,7 @@ func (s *Storage) UploadObject(objectKey string, reader io.ReadSeeker) error {
 	}
 
 	// Make the request
-	_, err := s.s3Client.PutObject(putObjectInput)
+	_, err := s.s3Client.PutObject(context.Background(), putObjectInput)
 	if err != nil {
 		s.log.Error().
 			Err(err).
@@ -96,7 +94,7 @@ func (s *Storage) GetSectionFromObject(objectKey string, offsetFromFileStart, si
 	}
 
 	// Make the request
-	result, err := s.s3Client.GetObject(input)
+	result, err := s.s3Client.GetObject(context.Background(), input)
 	if err != nil {
 		s.log.Error().
 			Err(err).
@@ -117,4 +115,22 @@ func (s *Storage) GetSectionFromObject(objectKey string, offsetFromFileStart, si
 	}
 
 	return contents, nil
+}
+
+func (s *Storage) PresignGetObject(objectKey string) (string, error) {
+	request, err := s.s3PresignClient.PresignGetObject(
+		context.Background(),
+		&s3.GetObjectInput{
+			Bucket: aws.String(s.config.S3.Bucket),
+			Key:    aws.String(objectKey),
+		},
+		func(opts *s3.PresignOptions) {
+			opts.Expires = time.Minute
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return request.URL, nil
 }

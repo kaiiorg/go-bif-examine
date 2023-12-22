@@ -19,9 +19,32 @@ func (s *Server) GetJob(ctx context.Context, req *pb.GetJobRequest) (*pb.GetJobR
 		return resp, err
 	}
 
+	resourceBif, err := s.examineRepository.GetBifById(resource.BifID)
+	if err != nil {
+		s.log.Error().
+			Err(err).
+			Uint("resourceId", resource.ID).
+			Uint("bifId", resource.BifID).
+			Msg("Failed to get the bif for the selected resource for whisperer")
+		return resp, err
+	}
+	// Shouldn't need to worry about this check failing, but we're going to check anyway
+	if resourceBif.ObjectKey == nil {
+		s.log.Error().
+			Uint("resourceId", resource.ID).
+			Uint("bifId", resource.BifID).
+			Msg("The bif for the resource hasn't been uploaded!")
+		return resp, ErrBifNotYetUploaded
+	}
+
+	resp.PresignedUrl, err = s.storage.PresignGetObject(*resourceBif.ObjectKey)
+	if err != nil {
+		s.log.Error().Err(err).Msg("Failed to get a presigned URL to the resource for whisper")
+		return resp, err
+	}
+
 	resp.Name = resource.Name
 	resp.ResourceId = uint32(resource.ID)
-	resp.PresignedUrl = "tbd"
 	resp.Offset = resource.OffsetToData
 	resp.Size = resource.Size
 
