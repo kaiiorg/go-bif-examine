@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"sync"
+	"time"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/models"
 )
@@ -58,6 +59,28 @@ func (r *GormExamineRepository) GetResourceById(resourceId uint) (*models.Resour
 		},
 	}
 	err := r.db.First(resource).Error
+	if err != nil {
+		return nil, err
+	}
+	return resource, nil
+}
+
+func (r *GormExamineRepository) GetResourceForWhisper() (*models.Resource, error) {
+	resource := &models.Resource{}
+
+	// TODO find a better way of doing this; there's a small chance that we could query for a record,
+	// then while we're about to update the job started column, another request grabs the same record
+	err := r.db.
+		Where("deleted_at IS NULL AND offset_to_data != 0 AND size != 0 AND job_duration IS NULL").
+		Order("job_started").
+		Limit(1).
+		First(resource).Error
+	if err != nil {
+		return nil, err
+	}
+	err = r.db.Model(resource).
+		Updates(map[string]interface{}{"job_started": time.Now()}).
+		Error
 	if err != nil {
 		return nil, err
 	}

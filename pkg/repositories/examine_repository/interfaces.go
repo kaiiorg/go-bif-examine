@@ -16,5 +16,6 @@ type ExamineRepository interface {
 	CreateManyResources(resources []*models.Resource) error
 	FindProjectResourcesForBif(projectId uint, bifId uint) ([]*models.Resource, error)
 	GetResourceById(resourceId uint) (*models.Resource, error)
+	GetResourceForWhisper() (*models.Resource, error)
 	UpdateResource(resource *models.Resource) error
 }

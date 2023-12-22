@@ -2,6 +2,7 @@ package models
 
 import (
 	"gorm.io/gorm"
+	"time"
 )
 
 type Resource struct {
@@ -24,4 +25,10 @@ type Resource struct {
 	OffsetToData uint32
 	// Size is how large this resource is
 	Size uint32
+
+	JobStarted   *time.Time
+	JobDuration  string
+	Text         string
+	RawOutput    string
+	WhisperModel string
 }

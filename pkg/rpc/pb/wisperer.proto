@@ -28,8 +28,9 @@ message GetJobResponse {
 message JobResultsRequest {
   uint32 resource_id = 1;
   string text = 2;
-  string raw_output = 3;
+  bytes raw_output = 3;
   string model = 4;
+  string duration = 5;
 }
 message JobResultsResponse {
 }

@@ -2,9 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
-	"github.com/google/uuid"
+	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc/pb"
 	"github.com/kaiiorg/go-bif-examine/pkg/util"
@@ -19,6 +24,7 @@ const (
 	applicationDescription = "A rather dumb way of calling https://github.com/openai/whisper"
 
 	whisper = "whisper"
+	model   = "medium.en"
 )
 
 var (
@@ -30,7 +36,7 @@ func main() {
 	flag.Parse()
 	util.ConfigureLogging(*logLevel, applicationName, applicationDescription)
 
-	checkWhisperAvailabilty()
+	whichWhisper := checkWhisperAvailabilty()
 	client := dial()
 
 	job, err := client.GetJob(context.Background(), &pb.GetJobRequest{})
@@ -45,13 +51,30 @@ func main() {
 		Uint32("size", job.GetSize()).
 		Msg("Got job from go-bif-examine")
 
-	log.Info().Msg("This is the part where we'd run the job, but that isn't implemented yet")
+	log.Info().Msg("This is the part where we'd download the file, but that isn't implemented yet")
+
+	start := time.Now()
+	outputFile, err := runWhisperer(whichWhisper, "./test_bifs/MINS1288.wav")
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to run whisper on the file")
+	}
+	duration := time.Since(start).String()
+	log.Info().
+		Str("outputFile", outputFile).
+		Str("duration", duration).
+		Msg("Whisper ran and should have written something to the given file")
+
+	output, rawOutput, err := extractWhisperOutput(outputFile)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to run parse whisper output")
+	}
 
 	jobResults := &pb.JobResultsRequest{
 		ResourceId: job.GetResourceId(),
-		Text:       uuid.NewString(),
-		RawOutput:  uuid.NewString(),
+		Text:       output.Text,
+		RawOutput:  rawOutput,
 		Model:      "medium.en",
+		Duration:   duration,
 	}
 	_, err = client.JobResults(context.Background(), jobResults)
 	if err == nil {
@@ -61,12 +84,13 @@ func main() {
 	}
 }
 
-func checkWhisperAvailabilty() {
+func checkWhisperAvailabilty() string {
 	path, err := exec.LookPath(whisper)
 	if err != nil {
 		log.Fatal().Err(err).Str("github", "https://github.com/openai/whisper").Msg("Unable to validate that whisper is installed. See its github page for install instructions")
 	}
 	log.Info().Str("path", path).Msg("Found whisper install!")
+	return path
 }
 
 func dial() pb.WhispererClient {
@@ -78,4 +102,55 @@ func dial() pb.WhispererClient {
 		log.Fatal().Err(err).Msg("Failed to connect to gRPC server")
 	}
 	return pb.NewWhispererClient(conn)
+}
+
+func runWhisperer(whichWhisper, inputFilepath string) (string, error) {
+	outputDir, err := os.MkdirTemp("", "whisperer")
+	if err != nil {
+		return "", err
+	}
+
+	args := []string{
+		whichWhisper,
+		inputFilepath,
+		"--model", model,
+		"--output_format", "json",
+		"--output_dir", outputDir,
+		"--language", "en",
+	}
+	log.Info().Strs("args", args).Msg("Attempting to run whisper")
+
+	cmd := &exec.Cmd{
+		Path: whichWhisper,
+		Args: args,
+		// Stdout: os.Stdout,
+		// Stderr: os.Stderr,
+	}
+
+	err = cmd.Run()
+	if err != nil {
+		return "", err
+	}
+
+	wavName := filepath.Base(inputFilepath)
+	name := strings.TrimSuffix(wavName, filepath.Ext(wavName))
+	jsonName := fmt.Sprintf("%s.json", name)
+
+	return filepath.Join(outputDir, jsonName), nil
+}
+
+func extractWhisperOutput(outputFile string) (*WhisperOutput, []byte, error) {
+	contents, err := os.ReadFile(outputFile)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	whisperOutput := &WhisperOutput{Segments: []WhisperOutputSegments{}}
+
+	err = json.Unmarshal(contents, whisperOutput)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return whisperOutput, contents, nil
 }
