@@ -1,3 +1,5 @@
+# This is still a work in progress!
+
 # go-bif-examine
 An overcomplicated system to examine [BIF](https://gibberlings3.github.io/iesdp/file_formats/ie_formats/bif_v1.htm) and [KEY](https://gibberlings3.github.io/iesdp/file_formats/ie_formats/key_v1.htm) files used in Bioware's Infinity Engine (used for Baldur's Gate 2), extract its audio files, pass them to [Whisper](https://github.com/openai/whisper), and allow searching and downloading of files based on the character's speech within.
 
