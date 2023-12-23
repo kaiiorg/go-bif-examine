@@ -67,7 +67,7 @@ func (r *GormExamineRepository) GetResourceForWhisper() (*models.Resource, error
 	// then while we're about to update the job started column, another request grabs the same record
 	err := r.db.
 		Where("deleted_at IS NULL AND offset_to_data != 0 AND size != 0 AND job_duration = ''").
-		Order("job_started").
+		Order("job_started DESC").
 		Limit(1).
 		First(resource).Error
 	if err != nil {

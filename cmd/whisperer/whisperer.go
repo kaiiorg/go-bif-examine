@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -51,10 +53,18 @@ func main() {
 		Uint32("size", job.GetSize()).
 		Msg("Got job from go-bif-examine")
 
-	log.Info().Msg("This is the part where we'd download the file, but that isn't implemented yet")
+	outputDir, err := os.MkdirTemp("", "whisperer")
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to create a temp dir")
+	}
+
+	audioFile, err := downloadTargetFile(outputDir, job.GetName(), job.GetPresignedUrl(), job.GetOffset(), job.GetSize())
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to create a download the audio file from s3")
+	}
 
 	start := time.Now()
-	outputFile, err := runWhisperer(whichWhisper, "./test_bifs/MINS1288.wav")
+	outputFile, err := runWhisperer(outputDir, whichWhisper, audioFile)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to run whisper on the file")
 	}
@@ -104,12 +114,42 @@ func dial() pb.WhispererClient {
 	return pb.NewWhispererClient(conn)
 }
 
-func runWhisperer(whichWhisper, inputFilepath string) (string, error) {
-	outputDir, err := os.MkdirTemp("", "whisperer")
+func downloadTargetFile(outputDir, outputFilename, presignedUrl string, offsetToData uint32, size uint32) (string, error) {
+	saveTo := filepath.Join(outputDir, fmt.Sprintf("%s.wav", outputFilename))
+	file, err := os.Create(saveTo)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	log.Info().Str("tempFile", saveTo).Msg("Created temporary file")
+
+	req, err := http.NewRequest(http.MethodGet, presignedUrl, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Add("Range", fmt.Sprintf("bytes=%d-%d", offsetToData, offsetToData+size))
+
+	// TODO don't recreate the http client every time
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 && resp.StatusCode != 206 {
+		log.Fatal().Str("status", resp.Status).Msg("Response from S3 was not a 200 OK or 206 Partial Content")
+	}
+	_, err = io.Copy(file, resp.Body)
 	if err != nil {
 		return "", err
 	}
 
+	log.Info().Str("path", saveTo).Msg("Downloaded audio file")
+
+	return saveTo, nil
+}
+
+func runWhisperer(outputDir, whichWhisper, inputFilepath string) (string, error) {
 	args := []string{
 		whichWhisper,
 		inputFilepath,
@@ -127,7 +167,7 @@ func runWhisperer(whichWhisper, inputFilepath string) (string, error) {
 		// Stderr: os.Stderr,
 	}
 
-	err = cmd.Run()
+	err := cmd.Run()
 	if err != nil {
 		return "", err
 	}
@@ -135,6 +175,7 @@ func runWhisperer(whichWhisper, inputFilepath string) (string, error) {
 	wavName := filepath.Base(inputFilepath)
 	name := strings.TrimSuffix(wavName, filepath.Ext(wavName))
 	jsonName := fmt.Sprintf("%s.json", name)
+	log.Info().Str("wavName", wavName).Str("name", name).Str("jsonName", jsonName).Send()
 
 	return filepath.Join(outputDir, jsonName), nil
 }

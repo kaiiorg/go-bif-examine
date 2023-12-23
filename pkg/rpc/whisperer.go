@@ -58,7 +58,7 @@ func (s *Server) JobResults(ctx context.Context, req *pb.JobResultsRequest) (*pb
 
 	s.log.Info().
 		Uint32("resourceId", req.GetResourceId()).
-		// Str("text", req.GetText()).
+		Str("text", req.GetText()).
 		// Bytes("rawOutput", req.GetRawOutput()).
 		Str("model", req.GetModel()).
 		Str("duration", req.GetDuration()).
