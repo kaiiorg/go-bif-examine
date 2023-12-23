@@ -42,7 +42,7 @@ func New(log zerolog.Logger, gRpcServer string) (*Whisperer, error) {
 	}
 	w.ctx, w.ctxCancel = context.WithCancel(context.Background())
 
-	err := w.checkWhisperAvailabilty()
+	err := w.checkWhisperAvailability(whisper_cli)
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +68,7 @@ func (w *Whisperer) Run() {
 func (w *Whisperer) Close() {
 	w.ctxCancel()
 	w.wg.Wait()
+	os.RemoveAll(w.tempDir)
 }
 
 func (w *Whisperer) doRun() {

@@ -44,11 +44,11 @@ func (kh *KeyHeader) Validate(fileSize int64) error {
 	}
 
 	if int64(kh.OffsetToBifEntries) > fileSize {
-		return errors.Join(ErrBifEntryOffsetExceedsFile, fmt.Errorf("file offset = %s, which is beyond the file size of %d reported by the os", kh.OffsetToBifEntries, fileSize))
+		return errors.Join(ErrBifEntryOffsetExceedsFile, fmt.Errorf("file offset = %d, which is beyond the file size of %d reported by the os", kh.OffsetToBifEntries, fileSize))
 	}
 
 	if int64(kh.OffsetToResourceEntries) > fileSize {
-		return errors.Join(ErrBifEntryResourceOffsetExceedsFile, fmt.Errorf("file offset = %s, which is beyond the file size of %d reported by the os", kh.OffsetToResourceEntries, fileSize))
+		return errors.Join(ErrBifEntryResourceOffsetExceedsFile, fmt.Errorf("file offset = %d, which is beyond the file size of %d reported by the os", kh.OffsetToResourceEntries, fileSize))
 	}
 
 	return nil

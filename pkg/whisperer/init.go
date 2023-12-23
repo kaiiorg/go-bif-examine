@@ -9,9 +9,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func (w *Whisperer) checkWhisperAvailabilty() error {
+func (w *Whisperer) checkWhisperAvailability(programNameInPath string) error {
 	var err error
-	w.whisperPath, err = exec.LookPath(whisper_cli)
+	w.whisperPath, err = exec.LookPath(programNameInPath)
 	if err != nil {
 		w.log.Error().Err(err).Str("github", whisper_github).Msg("Unable to validate that whisper is installed. See its github page for install instructions")
 		return err
