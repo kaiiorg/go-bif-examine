@@ -54,12 +54,12 @@ func New(conf *config.Config) (*BifExamine, error) {
 		return nil, err
 	}
 
-	// Setup main struct along with the rpc.go and web components
+	// Setup main struct along with the cli.go and web components
 	be := &BifExamine{
 		config:            conf,
 		log:               log.With().Str("component", "general").Logger(),
 		storage:           s3Storage,
-		rpc:               rpc.New(examineRepository, s3Storage, conf, log.With().Str("component", "rpc.go").Logger()),
+		rpc:               rpc.New(examineRepository, s3Storage, conf, log.With().Str("component", "cli.go").Logger()),
 		web:               web.New(conf, log.With().Str("component", "web").Logger()),
 		examineRepository: examineRepository,
 	}
