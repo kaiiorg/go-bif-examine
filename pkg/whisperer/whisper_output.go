@@ -1,4 +1,4 @@
-package main
+package whisperer
 
 type WhisperOutput struct {
 	Text     string                  `json:"text"`
