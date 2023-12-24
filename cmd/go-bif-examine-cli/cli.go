@@ -2,15 +2,17 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/kaiiorg/go-bif-examine/pkg/rpc/pb"
 	"github.com/kaiiorg/go-bif-examine/pkg/util"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 const (
@@ -34,8 +36,16 @@ const (
 type Cli struct {
 	grpcClient pb.BifExamineClient
 
+	// Global variables
 	logLevel   string
 	grpcServer string
+
+	// Command specific variables
+	// TODO split out commands into their own struct so they aren't storing their variables together
+	uploadKeyName       string
+	uploadBifProjectId  uint
+	uploadBifNameInKey  string
+	downloadResourceDir string
 
 	rootCmd             *cobra.Command
 	getCmd              *cobra.Command
