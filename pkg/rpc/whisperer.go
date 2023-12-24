@@ -56,14 +56,26 @@ func (s *Server) JobResults(ctx context.Context, req *pb.JobResultsRequest) (*pb
 	s.log.Info().Msg("JobResults start")
 	defer s.log.Info().Str("duration", time.Since(start).String()).Msg("JobResults end")
 
+	resource, err := s.examineRepository.GetResourceById(uint(req.GetResourceId()))
+	if err != nil {
+		return &pb.JobResultsResponse{}, nil
+	}
+	resource.Text = req.GetText()
+	resource.RawOutput = string(req.GetRawOutput())
+	resource.WhisperModel = req.GetModel()
+	resource.JobDuration = req.GetDuration()
+
+	err = s.examineRepository.UpdateResource(resource)
+	if err != nil {
+		return &pb.JobResultsResponse{}, err
+	}
+
 	s.log.Info().
 		Uint32("resourceId", req.GetResourceId()).
 		Str("text", req.GetText()).
-		// Bytes("rawOutput", req.GetRawOutput()).
 		Str("model", req.GetModel()).
 		Str("duration", req.GetDuration()).
-		Msg("Got result from an instance of whisperer")
+		Msg("Got and saved result from an instance of whisperer")
 
-	resp := &pb.JobResultsResponse{}
-	return resp, nil
+	return &pb.JobResultsResponse{}, nil
 }
