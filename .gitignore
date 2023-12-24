@@ -1,10 +1,9 @@
 # Not committing the biff and key files to git; I'm sure whoever owns the copywrite wouldn't like that.
 *.bif
 *.key
+output.json
+*.wav
 
 .idea/
 bin/
 protoc/
-
-output.json
-*.wav

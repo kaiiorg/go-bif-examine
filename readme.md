@@ -1,9 +1,28 @@
 # This is still a work in progress!
 
 # go-bif-examine
-An overcomplicated system to examine [BIF](https://gibberlings3.github.io/iesdp/file_formats/ie_formats/bif_v1.htm) and [KEY](https://gibberlings3.github.io/iesdp/file_formats/ie_formats/key_v1.htm) files used in Bioware's Infinity Engine (used for Baldur's Gate 2), extract its audio files, pass them to [Whisper](https://github.com/openai/whisper), and allow searching and downloading of files based on the character's speech within.
+An overcomplicated system to examine [BIF](https://gibberlings3.github.io/iesdp/file_formats/ie_formats/bif_v1.htm) and [KEY](https://gibberlings3.github.io/iesdp/file_formats/ie_formats/key_v1.htm) files used in Bioware's Infinity Engine 
+(used for games like Baldur's Gate 2), extract its audio files, pass them to [Whisper](https://github.com/openai/whisper), 
+and allow searching and downloading of files based on the character's speech within.
 
-This is mostly so I have an excuse to write something in Go.
+## Scope
+This is mostly to have an excuse to write something in Go, so there's a handful of things that
+I've left out of scope either because they're not really needed for a self-hosted system that lives
+entirely behind a firewall, or I didn't think would be fun to work on. If this were a real 
+production application generating revenue, I'd put a lot more time and effort into these things.
+
+- Encryption between services
+- Encrypted DB connection
+- HTTPS for S3
+- Using AWS S3 instead of minio
+  - Using minio mostly so I don't have to pay any money for a hobby project. I also like self-hosting stuff when possible/reasonable
+- Not using [exec](https://pkg.go.dev/os/exec) for the whisperer service
+  - Since the interface uses gRPC and gRPC supports python, it'd be More Correct™ to rewrite it in python and call Whisper directly, but I don't want to write python.
+
+## BYOA: Bring Your Own Assets
+I do not (purposely) provide any game assets. I'd really rather avoid a letter from whoever owns 
+the copywrite. You'll need to bring your own. I downloaded Baldur's Gate II: Enhanced Edition
+from Steam and copied the files from there.
 
 ## Important Resources
 - [gibberlings3/iesdp](https://github.com/gibberlings3/iesdp/) for the detailed documentation on the BIF and KEY file formats
@@ -22,46 +41,30 @@ This is mostly so I have an excuse to write something in Go.
                 1. [X] Save BIF file to S3 compatible storage
                 2. [X] Find the file's SHA256 hash to deduplicate data and to allow more than one version of the same file
                 3. [X] Save BIF entry data to DB
-            2. [ ] Don't save BIF file if the KEY file says it doesn't have any audio files in it
-        3. [ ] Schedule jobs to be sent to whisperer
-        4. [ ] Allow unscheduling of jobs to be sent to whisperer
-        5. [ ] Search results of whisperer
-        6. [ ] Download audio file content
-    2. [ ] Check for and send jobs to instances of whisper to extract the speech from each audio file
-        1. [X] Download only the audio data, not the entire bif file 
-        2. [ ] Save results to db
+        3. [ ] Search results of whisperer
+        4. [X] Download audio file content
+    2. [ ] Save whisperer results to db
 2. [ ] whisperer
-    1. [ ] Wrap [whisper](https://github.com/openai/whisper) with a simple API so `go-bif-examine` can utilize it without needing to resort to [exec](https://pkg.go.dev/os/exec)
-        1. [ ] Alternatively, use exec so I don't need to write any python and can reuse Go code?
-    2. [ ] Allow for multiple instances of whisper to be spread across more than one machine for faster processing
+   1. [ ] Using Exec so I don't need to write any python
+   2. [X] Allow for multiple instances of whisper to be spread across more than one machine for faster processing
+   3. [X] Download only the audio data, not the entire bif file
 3. [ ] examine-fe
+    - This has been shelved for the time being
     1. [ ] Barebones frontend used to interact with go-bif-examine
     2. [ ] To be embedded within go-bif-examine; no need to deploy separately
 4. [ ] go-bif-examin-cli
     - CLI tool to make gRPC calls. Mostly for development purposes so I don't need to figure out the web stuff immediately
-    - [X] quick and dirty CLI to test that downloading resources work
     - Commands, using cobra:
       1. [ ] get
-         - [ ] projects
+         - [X] projects
       2. [ ] delete
-         - [ ] Project
+         - [X] Project
       3. [ ] upload
-         - [ ] key
-         - [ ] bif
+         - [X] key
+         - [X] bif
          - [ ] auto: point to game dir and automatically upload key and bifs?
       4. [ ] download
-         - [ ] resource: save to file
+         - [X] resource: save to file
 5. [X] minio; deployed via docker compose
 6. [X] postgresql; deployed via docker compose
 7. [ ] Tests for everything
-
-## Whisperer <-> go-bif-examine communication notes
-Thinking the easiest option for now would be to use exec in go to execute the existing CLI tool that [openai/whisper](https://github.com/openai/whisper) provides. 
-
-For simplicities' sake, I think I'll just have the tool check if whisper is installed, the nope out if it isn't there and print install instructions. If I run it in a container most of the time, that shouldn't be an issue. 
-And given the wonder of abstracting everything behind an interface, I can always change it later.
-
-Remember that this is a personal project that I'm doing for fun; I want to focus on the fun stuff, which is writing Go.
-
-### Job scheduling
-Thinking the easiest option would be for whisperer to connect as a gRPC client to go-bif-examine, then ask it for jobs.
