@@ -94,7 +94,7 @@ func (cli *Cli) uploadBif(cmd *cobra.Command, args []string) error {
 	}
 	defer file.Close()
 
-	stream, err := cli.grpcClient.UploadLargeBif(cmd.Context())
+	stream, err := cli.grpcClient.UploadBif(cmd.Context())
 	if err != nil {
 		return err
 	}

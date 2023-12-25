@@ -13,8 +13,7 @@ service BifExamine {
   rpc GetResourcesMissingBifDetails(GetResourcesMissingBifDetailsRequest) returns (GetResourcesMissingBifDetailsResponse);
 
   rpc UploadKey(UploadKeyRequest) returns (UploadKeyResponse);
-  rpc UploadBif(UploadBifRequest) returns (UploadBifResponse);
-  rpc UploadLargeBif(stream UploadBifRequest) returns (UploadBifResponse);
+  rpc UploadBif(stream UploadBifRequest) returns (UploadBifResponse);
 
   rpc DownloadResource(DownloadResourceRequest) returns (DownloadResourceResponse);
 }
@@ -111,7 +110,6 @@ message UploadBifRequest {
   string name_in_key = 3;
   bytes contents = 4;
   int64 offset = 5;
-  int64 size = 6;
 }
 message UploadBifResponse {
   string error_description = 1;
