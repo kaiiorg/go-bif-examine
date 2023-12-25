@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -87,13 +88,36 @@ func (cli *Cli) uploadBif(cmd *cobra.Command, args []string) error {
 		FileName:  strings.ToLower(filepath.Base(args[0])),
 		NameInKey: cli.uploadBifNameInKey,
 	}
-	var err error
-	req.Contents, err = os.ReadFile(args[0])
+	file, err := os.Open(args[0])
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	stream, err := cli.grpcClient.UploadLargeBif(cmd.Context())
 	if err != nil {
 		return err
 	}
 
-	resp, err := cli.grpcClient.UploadBif(cmd.Context(), req)
+	buf := make([]byte, 2097152) // 2MB
+	offset := int64(0)
+	for {
+		bytesRead, err := file.Read(buf)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return err
+		}
+		req.Offset = offset
+		req.Contents = buf[:bytesRead]
+		err = stream.Send(req)
+		if err != nil {
+			return err
+		}
+		offset += int64(bytesRead)
+	}
+	resp, err := stream.CloseAndRecv()
 	if err != nil {
 		return err
 	}

@@ -19,11 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	BifExamine_GetAllProjects_FullMethodName   = "/pb.BifExamine/GetAllProjects"
-	BifExamine_DeleteProject_FullMethodName    = "/pb.BifExamine/DeleteProject"
-	BifExamine_UploadKey_FullMethodName        = "/pb.BifExamine/UploadKey"
-	BifExamine_UploadBif_FullMethodName        = "/pb.BifExamine/UploadBif"
-	BifExamine_DownloadResource_FullMethodName = "/pb.BifExamine/DownloadResource"
+	BifExamine_GetAllProjects_FullMethodName                = "/pb.BifExamine/GetAllProjects"
+	BifExamine_GetProjectById_FullMethodName                = "/pb.BifExamine/GetProjectById"
+	BifExamine_DeleteProject_FullMethodName                 = "/pb.BifExamine/DeleteProject"
+	BifExamine_GetBifsMissingContents_FullMethodName        = "/pb.BifExamine/GetBifsMissingContents"
+	BifExamine_GetResourcesMissingBifDetails_FullMethodName = "/pb.BifExamine/GetResourcesMissingBifDetails"
+	BifExamine_UploadKey_FullMethodName                     = "/pb.BifExamine/UploadKey"
+	BifExamine_UploadBif_FullMethodName                     = "/pb.BifExamine/UploadBif"
+	BifExamine_UploadLargeBif_FullMethodName                = "/pb.BifExamine/UploadLargeBif"
+	BifExamine_DownloadResource_FullMethodName              = "/pb.BifExamine/DownloadResource"
 )
 
 // BifExamineClient is the client API for BifExamine service.
@@ -31,9 +35,13 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BifExamineClient interface {
 	GetAllProjects(ctx context.Context, in *GetAllProjectsRequest, opts ...grpc.CallOption) (*GetAllProjectsResponse, error)
+	GetProjectById(ctx context.Context, in *GetProjectByIdRequest, opts ...grpc.CallOption) (*GetProjectByIdResponse, error)
 	DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error)
+	GetBifsMissingContents(ctx context.Context, in *GetBifsMissingContentsRequest, opts ...grpc.CallOption) (*GetBifsMissingContentsResponse, error)
+	GetResourcesMissingBifDetails(ctx context.Context, in *GetResourcesMissingBifDetailsRequest, opts ...grpc.CallOption) (*GetResourcesMissingBifDetailsResponse, error)
 	UploadKey(ctx context.Context, in *UploadKeyRequest, opts ...grpc.CallOption) (*UploadKeyResponse, error)
 	UploadBif(ctx context.Context, in *UploadBifRequest, opts ...grpc.CallOption) (*UploadBifResponse, error)
+	UploadLargeBif(ctx context.Context, opts ...grpc.CallOption) (BifExamine_UploadLargeBifClient, error)
 	DownloadResource(ctx context.Context, in *DownloadResourceRequest, opts ...grpc.CallOption) (*DownloadResourceResponse, error)
 }
 
@@ -54,9 +62,36 @@ func (c *bifExamineClient) GetAllProjects(ctx context.Context, in *GetAllProject
 	return out, nil
 }
 
+func (c *bifExamineClient) GetProjectById(ctx context.Context, in *GetProjectByIdRequest, opts ...grpc.CallOption) (*GetProjectByIdResponse, error) {
+	out := new(GetProjectByIdResponse)
+	err := c.cc.Invoke(ctx, BifExamine_GetProjectById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *bifExamineClient) DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error) {
 	out := new(DeleteProjectResponse)
 	err := c.cc.Invoke(ctx, BifExamine_DeleteProject_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bifExamineClient) GetBifsMissingContents(ctx context.Context, in *GetBifsMissingContentsRequest, opts ...grpc.CallOption) (*GetBifsMissingContentsResponse, error) {
+	out := new(GetBifsMissingContentsResponse)
+	err := c.cc.Invoke(ctx, BifExamine_GetBifsMissingContents_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bifExamineClient) GetResourcesMissingBifDetails(ctx context.Context, in *GetResourcesMissingBifDetailsRequest, opts ...grpc.CallOption) (*GetResourcesMissingBifDetailsResponse, error) {
+	out := new(GetResourcesMissingBifDetailsResponse)
+	err := c.cc.Invoke(ctx, BifExamine_GetResourcesMissingBifDetails_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +116,40 @@ func (c *bifExamineClient) UploadBif(ctx context.Context, in *UploadBifRequest, 
 	return out, nil
 }
 
+func (c *bifExamineClient) UploadLargeBif(ctx context.Context, opts ...grpc.CallOption) (BifExamine_UploadLargeBifClient, error) {
+	stream, err := c.cc.NewStream(ctx, &BifExamine_ServiceDesc.Streams[0], BifExamine_UploadLargeBif_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bifExamineUploadLargeBifClient{stream}
+	return x, nil
+}
+
+type BifExamine_UploadLargeBifClient interface {
+	Send(*UploadBifRequest) error
+	CloseAndRecv() (*UploadBifResponse, error)
+	grpc.ClientStream
+}
+
+type bifExamineUploadLargeBifClient struct {
+	grpc.ClientStream
+}
+
+func (x *bifExamineUploadLargeBifClient) Send(m *UploadBifRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *bifExamineUploadLargeBifClient) CloseAndRecv() (*UploadBifResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(UploadBifResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *bifExamineClient) DownloadResource(ctx context.Context, in *DownloadResourceRequest, opts ...grpc.CallOption) (*DownloadResourceResponse, error) {
 	out := new(DownloadResourceResponse)
 	err := c.cc.Invoke(ctx, BifExamine_DownloadResource_FullMethodName, in, out, opts...)
@@ -95,9 +164,13 @@ func (c *bifExamineClient) DownloadResource(ctx context.Context, in *DownloadRes
 // for forward compatibility
 type BifExamineServer interface {
 	GetAllProjects(context.Context, *GetAllProjectsRequest) (*GetAllProjectsResponse, error)
+	GetProjectById(context.Context, *GetProjectByIdRequest) (*GetProjectByIdResponse, error)
 	DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error)
+	GetBifsMissingContents(context.Context, *GetBifsMissingContentsRequest) (*GetBifsMissingContentsResponse, error)
+	GetResourcesMissingBifDetails(context.Context, *GetResourcesMissingBifDetailsRequest) (*GetResourcesMissingBifDetailsResponse, error)
 	UploadKey(context.Context, *UploadKeyRequest) (*UploadKeyResponse, error)
 	UploadBif(context.Context, *UploadBifRequest) (*UploadBifResponse, error)
+	UploadLargeBif(BifExamine_UploadLargeBifServer) error
 	DownloadResource(context.Context, *DownloadResourceRequest) (*DownloadResourceResponse, error)
 	mustEmbedUnimplementedBifExamineServer()
 }
@@ -109,14 +182,26 @@ type UnimplementedBifExamineServer struct {
 func (UnimplementedBifExamineServer) GetAllProjects(context.Context, *GetAllProjectsRequest) (*GetAllProjectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllProjects not implemented")
 }
+func (UnimplementedBifExamineServer) GetProjectById(context.Context, *GetProjectByIdRequest) (*GetProjectByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProjectById not implemented")
+}
 func (UnimplementedBifExamineServer) DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProject not implemented")
+}
+func (UnimplementedBifExamineServer) GetBifsMissingContents(context.Context, *GetBifsMissingContentsRequest) (*GetBifsMissingContentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBifsMissingContents not implemented")
+}
+func (UnimplementedBifExamineServer) GetResourcesMissingBifDetails(context.Context, *GetResourcesMissingBifDetailsRequest) (*GetResourcesMissingBifDetailsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetResourcesMissingBifDetails not implemented")
 }
 func (UnimplementedBifExamineServer) UploadKey(context.Context, *UploadKeyRequest) (*UploadKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadKey not implemented")
 }
 func (UnimplementedBifExamineServer) UploadBif(context.Context, *UploadBifRequest) (*UploadBifResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadBif not implemented")
+}
+func (UnimplementedBifExamineServer) UploadLargeBif(BifExamine_UploadLargeBifServer) error {
+	return status.Errorf(codes.Unimplemented, "method UploadLargeBif not implemented")
 }
 func (UnimplementedBifExamineServer) DownloadResource(context.Context, *DownloadResourceRequest) (*DownloadResourceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DownloadResource not implemented")
@@ -152,6 +237,24 @@ func _BifExamine_GetAllProjects_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BifExamine_GetProjectById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProjectByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BifExamineServer).GetProjectById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BifExamine_GetProjectById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BifExamineServer).GetProjectById(ctx, req.(*GetProjectByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BifExamine_DeleteProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteProjectRequest)
 	if err := dec(in); err != nil {
@@ -166,6 +269,42 @@ func _BifExamine_DeleteProject_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BifExamineServer).DeleteProject(ctx, req.(*DeleteProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BifExamine_GetBifsMissingContents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBifsMissingContentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BifExamineServer).GetBifsMissingContents(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BifExamine_GetBifsMissingContents_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BifExamineServer).GetBifsMissingContents(ctx, req.(*GetBifsMissingContentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BifExamine_GetResourcesMissingBifDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetResourcesMissingBifDetailsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BifExamineServer).GetResourcesMissingBifDetails(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BifExamine_GetResourcesMissingBifDetails_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BifExamineServer).GetResourcesMissingBifDetails(ctx, req.(*GetResourcesMissingBifDetailsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -206,6 +345,32 @@ func _BifExamine_UploadBif_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BifExamine_UploadLargeBif_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BifExamineServer).UploadLargeBif(&bifExamineUploadLargeBifServer{stream})
+}
+
+type BifExamine_UploadLargeBifServer interface {
+	SendAndClose(*UploadBifResponse) error
+	Recv() (*UploadBifRequest, error)
+	grpc.ServerStream
+}
+
+type bifExamineUploadLargeBifServer struct {
+	grpc.ServerStream
+}
+
+func (x *bifExamineUploadLargeBifServer) SendAndClose(m *UploadBifResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *bifExamineUploadLargeBifServer) Recv() (*UploadBifRequest, error) {
+	m := new(UploadBifRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func _BifExamine_DownloadResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DownloadResourceRequest)
 	if err := dec(in); err != nil {
@@ -236,8 +401,20 @@ var BifExamine_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BifExamine_GetAllProjects_Handler,
 		},
 		{
+			MethodName: "GetProjectById",
+			Handler:    _BifExamine_GetProjectById_Handler,
+		},
+		{
 			MethodName: "DeleteProject",
 			Handler:    _BifExamine_DeleteProject_Handler,
+		},
+		{
+			MethodName: "GetBifsMissingContents",
+			Handler:    _BifExamine_GetBifsMissingContents_Handler,
+		},
+		{
+			MethodName: "GetResourcesMissingBifDetails",
+			Handler:    _BifExamine_GetResourcesMissingBifDetails_Handler,
 		},
 		{
 			MethodName: "UploadKey",
@@ -252,6 +429,12 @@ var BifExamine_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BifExamine_DownloadResource_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "UploadLargeBif",
+			Handler:       _BifExamine_UploadLargeBif_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "pkg/rpc/pb/bif_examine.proto",
 }

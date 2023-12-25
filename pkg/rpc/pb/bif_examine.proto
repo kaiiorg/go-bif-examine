@@ -5,10 +5,16 @@ option go_package = "./pb";
 
 service BifExamine {
   rpc GetAllProjects(GetAllProjectsRequest) returns (GetAllProjectsResponse);
+  rpc GetProjectById(GetProjectByIdRequest) returns (GetProjectByIdResponse);
   rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse);
+
+  rpc GetBifsMissingContents(GetBifsMissingContentsRequest) returns (GetBifsMissingContentsResponse);
+
+  rpc GetResourcesMissingBifDetails(GetResourcesMissingBifDetailsRequest) returns (GetResourcesMissingBifDetailsResponse);
 
   rpc UploadKey(UploadKeyRequest) returns (UploadKeyResponse);
   rpc UploadBif(UploadBifRequest) returns (UploadBifResponse);
+  rpc UploadLargeBif(stream UploadBifRequest) returns (UploadBifResponse);
 
   rpc DownloadResource(DownloadResourceRequest) returns (DownloadResourceResponse);
 }
@@ -28,6 +34,17 @@ message GetAllProjectsResponse {
 }
 
 ///////////////////////////////////////
+// GetProjectById
+///////////////////////////////////////
+message GetProjectByIdRequest{
+  uint32 id = 1;
+}
+message GetProjectByIdResponse {
+  string error_description = 1;
+  Project project = 2;
+}
+
+///////////////////////////////////////
 // DeleteProject
 ///////////////////////////////////////
 message DeleteProjectRequest {
@@ -36,6 +53,31 @@ message DeleteProjectRequest {
 message DeleteProjectResponse {
   string error_description = 1;
 }
+
+
+///////////////////////////////////////
+// GetBifsMissingContents
+///////////////////////////////////////
+message GetBifsMissingContentsRequest {}
+message GetBifsMissingContentsResponse {
+  string error_description = 1;
+  repeated string name_in_key = 2;
+}
+
+
+///////////////////////////////////////
+// GetResourcesMissingBifDetails
+///////////////////////////////////////
+message Resource {
+  string name_in_key = 1;
+  string bif_in_key = 2;
+}
+message GetResourcesMissingBifDetailsRequest{}
+message GetResourcesMissingBifDetailsResponse{
+  string error_description = 1;
+  repeated Resource resources = 2;
+}
+
 
 ///////////////////////////////////////
 // UploadKey
@@ -68,6 +110,8 @@ message UploadBifRequest {
   // Must provide file_name or name_in_key
   string name_in_key = 3;
   bytes contents = 4;
+  int64 offset = 5;
+  int64 size = 6;
 }
 message UploadBifResponse {
   string error_description = 1;
