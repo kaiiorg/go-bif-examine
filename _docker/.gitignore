@@ -1,2 +1,5 @@
 db/
 minio/
+
+backup.db/
+backup.minio/
