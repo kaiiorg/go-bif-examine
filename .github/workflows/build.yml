@@ -26,6 +26,9 @@ jobs:
         run: go mod tidy
 
       - name: Build binary
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
         run: go build -ldflags="-X github.com/kaiiorg/go-bif-examine/pkg/util.version=${{ github.ref_name }}" -o ./bin/ ./cmd/go-bif-examine
 
       - name: Upload binary
@@ -52,6 +55,9 @@ jobs:
         run: go mod tidy
 
       - name: Build binary
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
         run: go build -ldflags="-X github.com/kaiiorg/go-bif-examine/pkg/util.version=${{ github.ref_name }}" -o ./bin/ ./cmd/go-bif-examine-cli
 
       - name: Upload binary
