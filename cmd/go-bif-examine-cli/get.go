@@ -22,9 +22,15 @@ func (cli *Cli) buildGetCmds() {
 		PreRunE: cli.grpcConfigure,
 		RunE:    cli.getProject,
 	}
+	cli.getBifsMissingContentCmd = &cobra.Command{
+		Use:     "bif",
+		Short:   "Gets the name of bif files still missing for the given project ID",
+		PreRunE: cli.grpcConfigure,
+		RunE:    cli.getBifsMissingContent,
+	}
 
 	cli.rootCmd.AddCommand(cli.getCmd)
-	cli.getCmd.AddCommand(cli.getProjectCmd)
+	cli.getCmd.AddCommand(cli.getProjectCmd, cli.getBifsMissingContentCmd)
 }
 
 func (cli *Cli) getProject(cmd *cobra.Command, args []string) error {
@@ -32,9 +38,9 @@ func (cli *Cli) getProject(cmd *cobra.Command, args []string) error {
 	// If there are no additional args provided, assume that we've been asked to get all projects
 	// Otherwise, assume each is a project ID we've been asked to get
 	if len(args) == 0 {
-		err = cli.getAllProjects(cli.getProjectCmd.Context())
+		err = cli.getAllProjects(cmd.Context())
 	} else {
-		err = cli.getProjectByIds(cli.getProjectCmd.Context(), args)
+		err = cli.getProjectByIds(cmd.Context(), args)
 	}
 	return err
 }
@@ -80,6 +86,34 @@ func (cli *Cli) getAllProjects(ctx context.Context) error {
 			Str("name", project.GetName()).
 			Str("originalKeyFileName", project.GetOriginalKeyFileName()).
 			Send()
+	}
+	return nil
+}
+
+func (cli *Cli) getBifsMissingContent(cmd *cobra.Command, args []string) error {
+	for _, projectIdStr := range args {
+		projectId, err := strconv.ParseUint(projectIdStr, 10, 32)
+		if err != nil {
+			return err
+		}
+
+		bifs, err := cli.grpcClient.GetBifsMissingContents(
+			cmd.Context(),
+			&pb.GetBifsMissingContentsRequest{
+				ProjectId: uint32(projectId),
+			},
+		)
+		if err != nil {
+			return err
+		}
+		log.Info().
+			Str("projectId", projectIdStr).
+			Int("count", len(bifs.NameInKey)).
+			Msg("Got bifs missing content for project")
+		for _, bif := range bifs.GetNameInKey() {
+			log.Info().Str("bifMissingContent", bif).Send()
+		}
+
 	}
 	return nil
 }

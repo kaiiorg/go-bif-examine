@@ -23,7 +23,8 @@ const (
 /*
  * go-bif-examine-cli
  * 		get
- * 			project
+ * 			project [ids]
+ *          bif project-ids
  * 		delete
  *			project
  * 		upload
@@ -47,16 +48,17 @@ type Cli struct {
 	uploadBifNameInKey  string
 	downloadResourceDir string
 
-	rootCmd             *cobra.Command
-	getCmd              *cobra.Command
-	getProjectCmd       *cobra.Command
-	deleteCmd           *cobra.Command
-	deleteProjectCmd    *cobra.Command
-	uploadCmd           *cobra.Command
-	uploadKeyCmd        *cobra.Command
-	uploadBifCmd        *cobra.Command
-	downloadCmd         *cobra.Command
-	downloadResourceCmd *cobra.Command
+	rootCmd                  *cobra.Command
+	getCmd                   *cobra.Command
+	getProjectCmd            *cobra.Command
+	getBifsMissingContentCmd *cobra.Command
+	deleteCmd                *cobra.Command
+	deleteProjectCmd         *cobra.Command
+	uploadCmd                *cobra.Command
+	uploadKeyCmd             *cobra.Command
+	uploadBifCmd             *cobra.Command
+	downloadCmd              *cobra.Command
+	downloadResourceCmd      *cobra.Command
 }
 
 func NewCli() *Cli {

@@ -50,14 +50,22 @@ func (s *Server) GetProjectById(ctx context.Context, req *pb.GetProjectByIdReque
 	return resp, nil
 }
 
-func (s *Server) DeleteProject(ctx context.Context, req *pb.DeleteProjectRequest) (*pb.DeleteProjectResponse, error) {
-	s.log.Info().Msg("DeleteProject")
-	resp := &pb.DeleteProjectResponse{}
+func (s *Server) GetBifsMissingContents(ctx context.Context, req *pb.GetBifsMissingContentsRequest) (*pb.GetBifsMissingContentsResponse, error) {
+	s.log.Info().Msg("GetBifsMissingContents")
+	resp := &pb.GetBifsMissingContentsResponse{}
 
-	err := s.examineRepository.DeleteProject(uint(req.GetProjectId()))
+	bifs, err := s.examineRepository.GetBifsMissingContent(uint(req.GetProjectId()))
 	if err != nil {
 		resp.ErrorDescription = err.Error()
 		return resp, err
 	}
+
+	for _, bif := range bifs {
+		resp.NameInKey = append(
+			resp.NameInKey,
+			bif.NameInKey,
+		)
+	}
+
 	return resp, nil
 }

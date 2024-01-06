@@ -11,6 +11,7 @@ type ExamineRepository interface {
 	CreateManyBifs(bifs []*models.Bif) error
 	GetBifByNormalizedNameOrNameInKey(normalizedBifName, bifNameInKey string) (*models.Bif, error)
 	GetBifById(bifId uint) (*models.Bif, error)
+	GetBifsMissingContent(projectId uint) ([]*models.Bif, error)
 	UpdateBif(bif *models.Bif) error
 
 	CreateManyResources(resources []*models.Resource) error

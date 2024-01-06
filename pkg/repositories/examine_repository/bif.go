@@ -40,6 +40,20 @@ func (r *GormExamineRepository) GetBifById(bifId uint) (*models.Bif, error) {
 	return bif, nil
 }
 
+func (r *GormExamineRepository) GetBifsMissingContent(projectId uint) ([]*models.Bif, error) {
+	bifs := []*models.Bif{}
+	r.db.
+		Where("object_key IS NULL").
+		Where(
+			"id IN (?)",
+			r.db.Model(models.Resource{}).
+				Select("DISTINCT bif_id").
+				Where("project_id = ?", projectId),
+		).
+		Find(&bifs)
+	return bifs, nil
+}
+
 func (r *GormExamineRepository) UpdateBif(bif *models.Bif) error {
 	return r.db.Save(bif).Error
 }

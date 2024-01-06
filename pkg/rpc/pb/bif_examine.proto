@@ -57,7 +57,9 @@ message DeleteProjectResponse {
 ///////////////////////////////////////
 // GetBifsMissingContents
 ///////////////////////////////////////
-message GetBifsMissingContentsRequest {}
+message GetBifsMissingContentsRequest {
+  uint32 project_id = 1;
+}
 message GetBifsMissingContentsResponse {
   string error_description = 1;
   repeated string name_in_key = 2;
