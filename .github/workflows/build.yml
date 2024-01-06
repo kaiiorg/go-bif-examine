@@ -2,15 +2,15 @@ name: Build
 
 on:
   push:
-    branches: [ "master", "dev" ]
+    branches: [ "master" ]
     tags:
       - '*'
   pull_request:
-    branches: [ "master", "dev" ]
+    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
-  build-go-bif-examine:
+  go-bif-examine:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,7 +19,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.21
+          go-version-file: "go.mod"
           cache: true
 
       - name: Go tidy
@@ -39,7 +39,7 @@ jobs:
             ./bin/go-bif-examine
           if-no-files-found: error
 
-  build-go-bif-examine-cli:
+  go-bif-examine-cli:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -48,7 +48,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.21
+          go-version-file: "go.mod"
           cache: true
 
       - name: Go tidy
@@ -66,4 +66,33 @@ jobs:
           name: go-bif-examine-cli
           path: |
             ./bin/go-bif-examine-cli
+          if-no-files-found: error
+
+  whisperer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - name: Go tidy
+        run: go mod tidy
+
+      - name: Build binary
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
+        run: go build -ldflags="-X github.com/kaiiorg/go-bif-examine/pkg/util.version=${{ github.ref_name }}" -o ./bin/ ./cmd/whisperer
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: whisperer
+          path: |
+            ./bin/whisperer
           if-no-files-found: error
