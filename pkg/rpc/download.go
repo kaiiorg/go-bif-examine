@@ -38,6 +38,11 @@ func (s *Server) DownloadResource(ctx context.Context, req *pb.DownloadResourceR
 
 	// Get the object from S3
 	resp.Content, err = s.storage.GetSectionFromObject(*bif.ObjectHash, resource.OffsetToData, resource.Size)
+	if err != nil {
+		s.log.Warn().Err(err).Uint32("resource", req.GetResourceId()).Uint("bif", resource.BifID).Msg("Failed get the section from the S3 object!")
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
 
 	return resp, nil
 }
