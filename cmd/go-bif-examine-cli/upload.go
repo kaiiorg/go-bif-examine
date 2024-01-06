@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -36,46 +37,63 @@ func (cli *Cli) buildUploadCmds() {
 		PreRunE: cli.grpcConfigure,
 		RunE:    cli.uploadBif,
 	}
+	cli.uploadAutoCmd = &cobra.Command{
+		Use:     "auto",
+		Short:   "Uploads a key to create a new project, then tries to automatically find and upload the bifs defined within",
+		PreRunE: cli.grpcConfigure,
+		RunE:    cli.uploadAuto,
+	}
 	cli.uploadKeyCmd.Flags().StringVar(&cli.uploadKeyName, "project-name", "", "Name of the project; will use the name of the keyfile if not provided")
 	cli.uploadBifCmd.Flags().UintVar(&cli.uploadBifProjectId, "project-id", 0, "Project ID to upload bif to")
 	cli.uploadBifCmd.MarkFlagRequired("project-id")
 	cli.uploadBifCmd.Flags().StringVar(&cli.uploadBifNameInKey, "name-in-key", "", "Exact name used in the key to link to this file")
 	cli.uploadBifCmd.MarkFlagRequired("name-in-key")
+	cli.uploadAutoCmd.Flags().StringVar(&cli.uploadKeyName, "project-name", "", "Name of the project; will use the name of the keyfile if not provided")
 	cli.rootCmd.AddCommand(cli.uploadCmd)
-	cli.uploadCmd.AddCommand(cli.uploadKeyCmd, cli.uploadBifCmd)
+	cli.uploadCmd.AddCommand(cli.uploadKeyCmd, cli.uploadBifCmd, cli.uploadAutoCmd)
 }
 
 func (cli *Cli) uploadKey(cmd *cobra.Command, args []string) error {
 	// Assume all the following args are paths to keys; attempt to upload them
 	for _, keyPath := range args {
-		if cli.uploadKeyName == "" {
-			cli.uploadKeyName = filepath.Base(keyPath)
-		}
-		req := &pb.UploadKeyRequest{
-			ProjectName: cli.uploadKeyName,
-			FileName:    filepath.Base(keyPath),
-		}
-		var err error
-		req.Contents, err = os.ReadFile(keyPath)
+		_, err := cli.uploadSingleKey(cmd.Context(), keyPath)
 		if err != nil {
 			return err
 		}
-
-		resp, err := cli.grpcClient.UploadKey(cmd.Context(), req)
-		if err != nil {
-			return err
-		}
-		log.Info().
-			Uint32("projectId", resp.GetProjectId()).
-			Str("parsedVersion", resp.GetKey().GetParsedVersion()).
-			Str("parsedSignature", resp.GetKey().GetParsedSignature()).
-			Uint32("resourceEntryCount", resp.GetKey().GetResourceEntryCount()).
-			Uint32("resourcesWithAudio", resp.GetKey().GetResourcesWithAudio()).
-			Int("bifFilesContainingAudioCount", len(resp.GetKey().GetBifFilesContainingAudio())).
-			Strs("bifFilesContainingAudio", resp.GetKey().GetBifFilesContainingAudio()).
-			Msg("Uploaded key")
 	}
 	return nil
+}
+
+func (cli *Cli) uploadSingleKey(ctx context.Context, keyPath string) (*pb.UploadKeyResponse, error) {
+	if cli.uploadKeyName == "" {
+		cli.uploadKeyName = filepath.Base(keyPath)
+	}
+	req := &pb.UploadKeyRequest{
+		ProjectName: cli.uploadKeyName,
+		FileName:    filepath.Base(keyPath),
+	}
+	var err error
+	req.Contents, err = os.ReadFile(keyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := cli.grpcClient.UploadKey(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info().
+		Uint32("projectId", resp.GetProjectId()).
+		Str("parsedVersion", resp.GetKey().GetParsedVersion()).
+		Str("parsedSignature", resp.GetKey().GetParsedSignature()).
+		Uint32("resourceEntryCount", resp.GetKey().GetResourceEntryCount()).
+		Uint32("resourcesWithAudio", resp.GetKey().GetResourcesWithAudio()).
+		Int("bifFilesContainingAudioCount", len(resp.GetKey().GetBifFilesContainingAudio())).
+		Strs("bifFilesContainingAudio", resp.GetKey().GetBifFilesContainingAudio()).
+		Msg("Uploaded key")
+
+	return resp, nil
 }
 
 func (cli *Cli) uploadBif(cmd *cobra.Command, args []string) error {
@@ -83,18 +101,22 @@ func (cli *Cli) uploadBif(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return ErrBifPathNotProvided
 	}
+	return cli.uploadSingleBif(cmd.Context(), args[0], uint32(cli.uploadBifProjectId))
+}
+
+func (cli *Cli) uploadSingleBif(ctx context.Context, bifPath string, projectId uint32) error {
 	req := &pb.UploadBifRequest{
-		ProjectId: uint32(cli.uploadBifProjectId),
-		FileName:  strings.ToLower(filepath.Base(args[0])),
+		ProjectId: projectId,
+		FileName:  strings.ToLower(filepath.Base(bifPath)),
 		NameInKey: cli.uploadBifNameInKey,
 	}
-	file, err := os.Open(args[0])
+	file, err := os.Open(bifPath)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	stream, err := cli.grpcClient.UploadBif(cmd.Context())
+	stream, err := cli.grpcClient.UploadBif(ctx)
 	if err != nil {
 		return err
 	}
@@ -125,5 +147,25 @@ func (cli *Cli) uploadBif(cmd *cobra.Command, args []string) error {
 		Uint32("resourcesFound", resp.GetResourcesFound()).
 		Uint32("resourcesNotFound", resp.GetResourcesNotFound()).
 		Msg("Uploaded bif")
+	return nil
+}
+
+func (cli *Cli) uploadAuto(cmd *cobra.Command, args []string) error {
+	// Assume all the following args are paths to keys; attempt to upload them
+	for _, keyPath := range args {
+		resp, err := cli.uploadSingleKey(cmd.Context(), keyPath)
+		if err != nil {
+			return err
+		}
+		keyDir := filepath.Dir(keyPath)
+
+		for _, keyBifPath := range resp.GetKey().GetBifFilesContainingAudio() {
+			err = cli.uploadSingleBif(cmd.Context(), filepath.Join(keyDir, keyBifPath), resp.GetProjectId())
+			if err != nil {
+				return err
+			}
+		}
+
+	}
 	return nil
 }

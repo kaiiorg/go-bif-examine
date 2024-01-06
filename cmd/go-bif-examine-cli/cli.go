@@ -57,6 +57,7 @@ type Cli struct {
 	uploadCmd                *cobra.Command
 	uploadKeyCmd             *cobra.Command
 	uploadBifCmd             *cobra.Command
+	uploadAutoCmd            *cobra.Command
 	downloadCmd              *cobra.Command
 	downloadResourceCmd      *cobra.Command
 }
