@@ -31,6 +31,25 @@ func (s *Server) GetAllProjects(ctx context.Context, req *pb.GetAllProjectsReque
 	return resp, nil
 }
 
+func (s *Server) GetProjectById(ctx context.Context, req *pb.GetProjectByIdRequest) (*pb.GetProjectByIdResponse, error) {
+	s.log.Info().Msg("GetProjectById")
+	resp := &pb.GetProjectByIdResponse{}
+
+	project, err := s.examineRepository.GetProjectById(uint(req.GetId()))
+	if err != nil {
+		resp.ErrorDescription = err.Error()
+		return resp, err
+	}
+
+	resp.Project = &pb.Project{
+		Id:                  uint32(project.ID),
+		Name:                project.Name,
+		OriginalKeyFileName: project.OriginalKeyFileName,
+	}
+
+	return resp, nil
+}
+
 func (s *Server) DeleteProject(ctx context.Context, req *pb.DeleteProjectRequest) (*pb.DeleteProjectResponse, error) {
 	s.log.Info().Msg("DeleteProject")
 	resp := &pb.DeleteProjectResponse{}
