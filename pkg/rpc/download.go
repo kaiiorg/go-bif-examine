@@ -19,7 +19,7 @@ func (s *Server) DownloadResource(ctx context.Context, req *pb.DownloadResourceR
 	if err != nil {
 		s.log.Warn().Err(err).Uint32("resource", req.GetResourceId()).Msg("Failed to find resource record for given resource id")
 		resp.ErrorDescription = err.Error()
-		return nil, err
+		return resp, err
 	}
 
 	// TODO validate that the offset to data and size aren't 0!
@@ -31,7 +31,7 @@ func (s *Server) DownloadResource(ctx context.Context, req *pb.DownloadResourceR
 	if err != nil {
 		s.log.Warn().Err(err).Uint32("resource", req.GetResourceId()).Uint("bif", resource.BifID).Msg("Failed to find bif record related to this resource")
 		resp.ErrorDescription = err.Error()
-		return nil, err
+		return resp, err
 	}
 
 	// TODO validate that the S3 key is set!
