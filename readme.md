@@ -32,21 +32,8 @@ from Steam and copied the files from there.
 - [gibberlings3/iesdp](https://github.com/gibberlings3/iesdp/) for the detailed documentation on the BIF and KEY file formats
 - [openai/whisper](https://github.com/openai/whisper) to do the heavy lifting to determine what was actually said in each audio file
 
-## Setup
-TBD
+## Dev Setup
+See [Dev Setup](/docs/dev.md)
 
-## Using the CLI
-1. Start by uploading your key file:
-    1.  `./go-bif-examine-cli upload key --project-name ${project_name} ${path_to_key_file}`
-        - `${project_name}` example: `Baldur's Gate II Enhanced Edition V2.6.6.0`
-        - `${path_to_key_file}` example: `"/mnt/c/Program Files (x86)/Steam/steamapps/common/Baldur's Gate II Enhanced Edition"`
-        - I'm running go-bif-examine from WSL, but have steam installed in Windows
-2. Next, upload each file that go-bif-examine says is needed
-    1. `./go-bif-examine/bin/go-bif-examine-cli upload bif --project-id ${project_id} --name-in-key "${bif}" "/mnt/c/Program Files (x86)/Steam/steamapps/common/Baldur's Gate II Enhanced Edition/${bif}"`
-        - `${project_id}` project ID returned in previous step
-        - `${bif}` example: `data/CHASound.bif`
-3. After uploading all the bif files you want Whisper to do its thing on, run whisperer with `./whisperer -grpc-server ${ip_of_server}:${grpc_port}`
-    - `${ip_of_server}` defaults to `localhost`
-    - `${grpc_port}` defaults to `50051`
-4. Wait... potentially a long time.
-    - I've been running two instances of whisperer running in WSL on my AMD Ryzen 5800X equipped machine for just over 25 hours as of writing and have churned through a bit over 4500 of 17877 audio resources
+## Getting Started
+See [Getting Started](/docs/getting_started.md)
