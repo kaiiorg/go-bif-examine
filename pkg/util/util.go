@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 
 	"github.com/rs/zerolog"
@@ -29,11 +30,27 @@ func ConfigureLogging(logLevel, applicationName, applicationDescription string) 
 		zerologLevel = zerolog.InfoLevel
 		log.Warn().Str("givenLogLevel", logLevel).Msg("Given an unexpected log level; defaulting to info level")
 	}
-	// Log application name and description just before changing the log level. This makes sure it always get printed
-	log.Info().
+	// Log application name, description, and other info just before changing the log level. This makes sure it always get printed
+	buildInfo, ok := debug.ReadBuildInfo()
+
+	l := log.Info().
 		Str("applicationName", applicationName).
 		Str("applicationDescription", applicationDescription).
-		Send()
+		Str("version", Version()).
+		Bool("supportsBuildInfo", ok)
+
+	if ok {
+		for _, setting := range buildInfo.Settings {
+			if setting.Key == "vcs.revision" {
+				l.Str("revision", setting.Value)
+			}
+			if setting.Key == "vcs.modified" {
+				l.Str("modified", setting.Value)
+			}
+		}
+	}
+
+	l.Send()
 
 	zerolog.SetGlobalLevel(zerologLevel)
 }

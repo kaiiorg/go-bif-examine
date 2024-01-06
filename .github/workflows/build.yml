@@ -1,0 +1,63 @@
+name: Build
+
+on:
+  push:
+    branches: [ "master", "dev" ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ "master", "dev" ]
+  workflow_dispatch:
+
+jobs:
+  build-go-bif-examine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.21
+          cache: true
+
+      - name: Go tidy
+        run: go mod tidy
+
+      - name: Build binary
+        run: go build -ldflags="-X github.com/kaiiorg/go-bif-examine/pkg/util.version=${{ github.ref_name }}" -o ./bin/ ./cmd/go-bif-examine
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: go-bif-examine
+          path: |
+            ./bin/go-bif-examine
+          if-no-files-found: error
+
+  build-go-bif-examine-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.21
+          cache: true
+
+      - name: Go tidy
+        run: go mod tidy
+
+      - name: Build binary
+        run: go build -ldflags="-X github.com/kaiiorg/go-bif-examine/pkg/util.version=${{ github.ref_name }}" -o ./bin/ ./cmd/go-bif-examine-cli
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: go-bif-examine-cli
+          path: |
+            ./bin/go-bif-examine-cli
+          if-no-files-found: error
