@@ -1,0 +1,78 @@
+name: Test
+
+on:
+  push:
+    branches: [ "master" ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - name: Go tidy
+        run: go mod tidy
+
+      - name: Run tests
+        run: go test -v -coverprofile coverage.csv ./...
+
+      - name: Create coverage report
+        run: go tool cover -html=coverage.csv -o coverage.html
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage.html
+          path: coverage.html
+
+  gofmt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - name: Go tidy
+        run: go mod tidy
+
+      - name: gofmt
+        # Run gofmt, list the changes made. The dev needs to run gofmt if this reports more than 0
+        run: "[ $(gofmt -l . | wc -l) -eq 0 ]"
+
+  staticcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - name: Go tidy
+        run: go mod tidy
+
+      - name: staticcheck
+        uses: dominikh/staticcheck-action@v1.3.0
+        with:
+          working-directory: "./"
+          install-go: false
